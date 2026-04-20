@@ -1518,6 +1518,63 @@
             animation: pulse 2s infinite;
         }
 
+        /* ===== Maintenance overlay ===== */
+        .maintenance-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(13, 17, 23, 0.98);
+            backdrop-filter: blur(10px);
+            z-index: 9998;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4rem 1.5rem 2rem;
+            text-align: center;
+        }
+        .maintenance-overlay.active { display: flex; }
+        .maintenance-hero { max-width: 520px; margin: auto; display: flex; flex-direction: column; align-items: center; }
+        .maintenance-hero .icon-wrap {
+            width: 88px; height: 88px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-blue), var(--purple));
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0 40px var(--accent-blue-glow);
+        }
+        .maintenance-hero .icon-wrap svg { width: 48px; height: 48px; color: #fff; }
+        .maintenance-hero h1 {
+            font-size: 2.5rem; font-weight: 800; margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--purple));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .maintenance-hero p { color: var(--text-secondary); font-size: 1.05rem; line-height: 1.6; max-width: 440px; }
+        .maintenance-unlock {
+            width: 100%; max-width: 360px;
+            display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+        }
+        .maintenance-unlock label {
+            font-size: 0.75rem; color: var(--text-secondary); letter-spacing: 0.08em; text-transform: uppercase;
+        }
+        .maintenance-unlock input {
+            width: 100%; height: 42px; padding: 0 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: inherit; font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .maintenance-unlock input:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px var(--accent-blue-glow);
+        }
+        @media (max-width: 520px) {
+            .maintenance-hero h1 { font-size: 1.75rem; }
+            .maintenance-hero p { font-size: 0.95rem; }
+        }
+
         /* ===== Modals (shared) ===== */
         .modal-overlay {
             position: fixed;
@@ -1765,6 +1822,23 @@
     </style>
 </head>
 <body>
+
+    <!-- Maintenance / Update Mode Overlay (shown when config/maintenance.enabled = true) -->
+    <div class="maintenance-overlay" id="maintenanceOverlay" role="dialog" aria-modal="true" aria-labelledby="maintenanceTitle">
+        <div class="maintenance-hero">
+            <div class="icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                </svg>
+            </div>
+            <h1 id="maintenanceTitle">Update Mode</h1>
+            <p>The shop is temporarily closed for updates. Check back in a bit — orders, tickets, and accounts will be right here waiting for you.</p>
+        </div>
+        <div class="maintenance-unlock">
+            <label for="maintenanceUnlockInput">Staff only</label>
+            <input type="text" id="maintenanceUnlockInput" placeholder="Enter unlock code…" autocomplete="off" spellcheck="false" oninput="checkMaintenanceUnlock(this)">
+        </div>
+    </div>
 
     <!-- Status Toast (reused for new orders and owner actions) -->
     <div class="new-order-toast" id="statusToast">
@@ -2190,11 +2264,22 @@
                 </div>
 
                 <div class="admin-form" style="margin-top: 1.5rem;">
+                    <h3>Update Mode</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">
+                        Turn on Update Mode to close the shop to everyone. A full-screen page appears on every device instead of the shop.
+                        Staff can still access the shop by typing the unlock code at the bottom of the update page, or by opening the Owner Panel.
+                    </p>
+                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+                        <button id="maintenanceToggleBtn" class="btn btn--primary" onclick="toggleMaintenance()">Loading…</button>
+                        <span id="maintenanceStatus" style="color: var(--text-secondary); font-size: 0.875rem;"></span>
+                    </div>
+                </div>
+
+                <div class="admin-form" style="margin-top: 1.5rem;">
                     <h3>Backup & Restore</h3>
                     <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">
-                        Orders, items, accounts, tickets, and announcements live in this browser's local storage and are tied to this file's path.
-                        If you download a new copy of <code style="color:var(--accent-cyan);">shop.html</code>, the new file starts empty.
-                        Export here to save everything to a JSON file, then Import it in the new copy.
+                        Orders, items, accounts, tickets, and announcements are synced through your cloud database.
+                        Export saves a snapshot of everything to a JSON file you can keep as a backup. Import overwrites the cloud data with that file.
                     </p>
                     <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
                         <button class="checkout-btn" onclick="exportData()">Export Data</button>
@@ -2273,6 +2358,7 @@
         let __tickets = [];
         let __users = [];
         let __announcement = '';
+        let __maintenance = false;
         let currentCategory = 'all';
         let editingItem = null;
         let lastOrderCount = 0;
@@ -2327,6 +2413,12 @@
                 if (ta && document.activeElement !== ta) ta.value = __announcement;
             });
 
+            // MAINTENANCE / UPDATE MODE (single doc at config/maintenance)
+            onSnapshot(doc(db, 'config', 'maintenance'), snap => {
+                __maintenance = snap.exists() && !!snap.data().enabled;
+                applyMaintenanceUI();
+            });
+
             // ACCOUNTS
             onSnapshot(collection(db, 'accounts'), snap => {
                 __users = snap.docs.map(d => d.data());
@@ -2379,6 +2471,8 @@
             renderAnnouncement();
             updateAccountUI();
             updateOwnerTicketBadge();
+            applyMaintenanceUI();
+            restoreOwnerSession();
         }
         document.addEventListener('DOMContentLoaded', boot);
         window.addEventListener('fsb-ready', boot);
@@ -2428,7 +2522,6 @@
                         <div class="item-name">${item.name}</div>
                         <div class="item-tags">
                             <span class="tag tag-item">item</span>
-                            <span class="tag tag-floor">Floor 1</span>
                             <span class="tag tag-category">${item.category}</span>
                         </div>
                     </div>
@@ -2689,6 +2782,7 @@
             const pass = document.getElementById('loginPass').value;
 
             if (user === 'Owner21' && pass === '121') {
+                localStorage.setItem('shopOwnerLoggedIn', '1');
                 closeLogin();
                 document.getElementById('ownerPanel').classList.add('active');
                 loadData(); // Refresh data
@@ -2697,6 +2791,7 @@
                 renderAdminItems();
                 renderOwnerTickets();
                 updateOwnerTicketBadge();
+                applyMaintenanceUI(); // owner bypasses maintenance overlay
                 document.getElementById('loginUser').value = '';
                 document.getElementById('loginPass').value = '';
             } else {
@@ -2705,7 +2800,26 @@
         }
 
         function logout() {
+            localStorage.removeItem('shopOwnerLoggedIn');
             document.getElementById('ownerPanel').classList.remove('active');
+            applyMaintenanceUI(); // re-check overlay after owner signs out
+        }
+
+        function isOwnerLoggedIn() {
+            return localStorage.getItem('shopOwnerLoggedIn') === '1';
+        }
+
+        function restoreOwnerSession() {
+            if (!isOwnerLoggedIn()) return;
+            const panel = document.getElementById('ownerPanel');
+            if (!panel) return;
+            panel.classList.add('active');
+            try { loadData(); } catch(e) {}
+            lastOrderCount = orders.length;
+            try { renderOrders(); } catch(e) {}
+            try { renderAdminItems(); } catch(e) {}
+            try { renderOwnerTickets(); } catch(e) {}
+            try { updateOwnerTicketBadge(); } catch(e) {}
         }
 
         function switchPanel(tab, ev) {
@@ -3054,6 +3168,64 @@
             setDoc(doc(db, 'config', 'announcement'), { text: '' })
                 .then(() => showToast('Announcement cleared'))
                 .catch(err => { console.error(err); showToast('Clear failed'); });
+        }
+
+        // ===== Update / Maintenance Mode =====
+        // Firestore doc: config/maintenance { enabled: bool }
+        // The overlay hides the shop for everyone. Staff bypass via:
+        //   (a) being the logged-in owner on this device, OR
+        //   (b) typing the unlock code below the overlay (persisted per-device).
+        const MAINTENANCE_UNLOCK_CODE = 'Unlock121';
+
+        function applyMaintenanceUI() {
+            const overlay = document.getElementById('maintenanceOverlay');
+            if (!overlay) return;
+            const unlocked = localStorage.getItem('shopMaintenanceUnlocked') === '1';
+            const isOwner = isOwnerLoggedIn();
+            const show = __maintenance && !unlocked && !isOwner;
+            overlay.classList.toggle('active', show);
+            // Prevent body scroll while overlay active
+            document.body.style.overflow = show ? 'hidden' : '';
+
+            // Update owner-panel toggle button + status
+            const btn = document.getElementById('maintenanceToggleBtn');
+            const status = document.getElementById('maintenanceStatus');
+            if (btn) {
+                if (__maintenance) {
+                    btn.textContent = 'Turn off Update Mode';
+                    btn.classList.remove('btn--primary');
+                    btn.classList.add('btn--danger');
+                } else {
+                    btn.textContent = 'Turn on Update Mode';
+                    btn.classList.remove('btn--danger');
+                    btn.classList.add('btn--primary');
+                }
+            }
+            if (status) {
+                status.textContent = __maintenance
+                    ? 'Shop is currently CLOSED to customers'
+                    : 'Shop is currently OPEN';
+                status.style.color = __maintenance ? 'var(--danger)' : 'var(--success)';
+            }
+        }
+
+        function toggleMaintenance() {
+            if (!fsbReady()) return;
+            const { db, doc, setDoc } = window.FSB;
+            const newVal = !__maintenance;
+            setDoc(doc(db, 'config', 'maintenance'), { enabled: newVal, updatedAt: new Date().toISOString() })
+                .then(() => showToast(newVal ? 'Update Mode ON' : 'Update Mode OFF'))
+                .catch(err => { console.error(err); showToast('Toggle failed'); });
+        }
+
+        function checkMaintenanceUnlock(input) {
+            if (!input) return;
+            if (input.value === MAINTENANCE_UNLOCK_CODE) {
+                localStorage.setItem('shopMaintenanceUnlocked', '1');
+                input.value = '';
+                applyMaintenanceUI();
+                showToast('Unlocked — welcome back');
+            }
         }
 
         // ===== Export / Import (Firestore-backed) =====
