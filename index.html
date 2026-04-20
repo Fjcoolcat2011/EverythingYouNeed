@@ -527,11 +527,53 @@
             box-shadow: 0 0 10px var(--success-glow);
         }
 
+        .order-available {
+            background: rgba(212, 153, 34, 0.15);
+            color: #e3b341;
+            border: 1px solid rgba(212, 153, 34, 0.35);
+            box-shadow: 0 0 10px rgba(212, 153, 34, 0.2);
+        }
+
         .out-stock {
             background: rgba(248, 81, 73, 0.15);
             color: var(--danger);
             border: 1px solid rgba(248, 81, 73, 0.3);
             box-shadow: 0 0 10px var(--danger-glow);
+        }
+
+        /* Stock status legend on the main page */
+        .stock-legend {
+            max-width: 1400px;
+            margin: 1.5rem auto 0;
+            padding: 1rem 1.25rem;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+        }
+        .stock-legend h3 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-secondary);
+            margin: 0 0 0.75rem;
+            font-weight: 600;
+        }
+        .stock-legend-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem 1.5rem;
+        }
+        .stock-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        .stock-legend-item .stock-badge { flex-shrink: 0; }
+        .stock-legend-item strong { color: var(--text-primary); font-weight: 500; }
+        @media (max-width: 600px) {
+            .stock-legend-row { flex-direction: column; gap: 0.6rem; }
         }
 
         .add-cart-btn {
@@ -1938,6 +1980,25 @@
         </div>
     </nav>
 
+    <!-- Stock status legend (explains the three badges used on item cards) -->
+    <div class="stock-legend" aria-label="Stock status legend">
+        <h3>Stock Status</h3>
+        <div class="stock-legend-row">
+            <div class="stock-legend-item">
+                <span class="stock-badge in-stock">Selling</span>
+                <span><strong>Selling</strong> = In stock now</span>
+            </div>
+            <div class="stock-legend-item">
+                <span class="stock-badge order-available">Order's Available</span>
+                <span><strong>Order's Available</strong> = You can order</span>
+            </div>
+            <div class="stock-legend-item">
+                <span class="stock-badge out-stock">Not Selling Right Now</span>
+                <span><strong>Not Selling Right Now</strong> = Cannot purchase yet</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Container -->
     <div class="container">
         <h2 class="section-title">Available Items</h2>
@@ -2233,8 +2294,9 @@
                     <div class="form-group">
                         <label>Stock Status *</label>
                         <select id="itemStock">
-                            <option value="true">In Stock</option>
-                            <option value="false">Out of Stock</option>
+                            <option value="selling">Selling (in stock now)</option>
+                            <option value="available">Order's Available (you can order)</option>
+                            <option value="not_selling">Not Selling Right Now (cannot purchase yet)</option>
                         </select>
                     </div>
                     <button class="checkout-btn" onclick="saveItem()" id="saveBtn">Add Item</button>
@@ -2376,15 +2438,43 @@
     <script>
         // ===== Default items (seeded on first run only) =====
         const DEFAULT_ITEMS = [
-            { id: 1, name: 'Elytra', category: 'Gear & Enchants', price: 40, quantity: 1, description: 'Rare elytra for gliding', inStock: true, currency: 'diamonds' },
-            { id: 2, name: 'Netherite Ingot', category: 'Nether', price: 2, quantity: 1, description: 'Netherite ingot for upgrading gear', inStock: true, currency: 'netherite' },
-            { id: 3, name: 'Heavy Core', category: 'Nether', price: 5, quantity: 1, description: 'Heavy core item', inStock: false, currency: 'diamonds' },
-            { id: 4, name: 'Dragon Head', category: 'Mob Drops', price: 35, quantity: 1, description: 'Rare dragon head trophy', inStock: true, currency: 'diamonds' },
-            { id: 5, name: 'Oak Wood Planks', category: 'Wood & Natural', price: 2, quantity: 64, description: '1 stack of oak wood planks', inStock: true, currency: 'diamonds' },
-            { id: 6, name: 'Redstone Dust', category: 'Redstone & Utility', price: 1, quantity: 64, description: '1 stack of redstone dust', inStock: true, currency: 'diamonds' },
-            { id: 7, name: 'Enchanted Golden Apple', category: 'Premium Items', price: 3, quantity: 1, description: 'God apple for emergencies', inStock: false, currency: 'netherite' },
-            { id: 8, name: 'Diamond Pickaxe (Efficiency V)', category: 'Gear & Enchants', price: 25, quantity: 1, description: 'Pre-enchanted pickaxe', inStock: true, currency: 'diamonds' }
+            { id: 1, name: 'Elytra', category: 'Gear & Enchants', price: 40, quantity: 1, description: 'Rare elytra for gliding', status: 'selling', currency: 'diamonds' },
+            { id: 2, name: 'Netherite Ingot', category: 'Nether', price: 2, quantity: 1, description: 'Netherite ingot for upgrading gear', status: 'selling', currency: 'netherite' },
+            { id: 3, name: 'Heavy Core', category: 'Nether', price: 5, quantity: 1, description: 'Heavy core item', status: 'available', currency: 'diamonds' },
+            { id: 4, name: 'Dragon Head', category: 'Mob Drops', price: 35, quantity: 1, description: 'Rare dragon head trophy', status: 'selling', currency: 'diamonds' },
+            { id: 5, name: 'Oak Wood Planks', category: 'Wood & Natural', price: 2, quantity: 64, description: '1 stack of oak wood planks', status: 'selling', currency: 'diamonds' },
+            { id: 6, name: 'Redstone Dust', category: 'Redstone & Utility', price: 1, quantity: 64, description: '1 stack of redstone dust', status: 'selling', currency: 'diamonds' },
+            { id: 7, name: 'Enchanted Golden Apple', category: 'Premium Items', price: 3, quantity: 1, description: 'God apple for emergencies', status: 'not_selling', currency: 'netherite' },
+            { id: 8, name: 'Diamond Pickaxe (Efficiency V)', category: 'Gear & Enchants', price: 25, quantity: 1, description: 'Pre-enchanted pickaxe', status: 'selling', currency: 'diamonds' }
         ];
+
+        // ===== Stock status helpers =====
+        // Legacy items used a boolean `inStock`. New items use string `status`:
+        //   'selling'     -> In stock now (green)
+        //   'available'   -> Order's Available (amber)
+        //   'not_selling' -> Not Selling Right Now (red) -> blocks cart
+        function getItemStatus(item) {
+            if (item && typeof item.status === 'string') {
+                const s = item.status;
+                if (s === 'selling' || s === 'available' || s === 'not_selling') return s;
+            }
+            // Back-compat: map legacy boolean.
+            if (item && item.inStock === false) return 'not_selling';
+            return 'selling';
+        }
+        function statusLabel(s) {
+            if (s === 'available') return "Order's Available";
+            if (s === 'not_selling') return 'Not Selling Right Now';
+            return 'Selling';
+        }
+        function statusClass(s) {
+            if (s === 'available') return 'order-available';
+            if (s === 'not_selling') return 'out-stock';
+            return 'in-stock';
+        }
+        function canOrder(item) {
+            return getItemStatus(item) !== 'not_selling';
+        }
 
         // ===== Data Storage (maintained live by Firestore listeners) =====
         let items = [];
@@ -2571,16 +2661,16 @@
                             <span class="currency-icon">${getCurrencySymbol(item.currency || 'diamonds')}</span>
                             ${item.price} <span style="font-size: 0.875rem; color: var(--text-secondary);">${getCurrencyLabel(item.currency || 'diamonds')}</span>
                         </div>
-                        <span class="stock-badge ${item.inStock ? 'in-stock' : 'out-stock'}">
-                            ${item.inStock ? 'In Stock' : 'Out of Stock'}
+                        <span class="stock-badge ${statusClass(getItemStatus(item))}">
+                            ${statusLabel(getItemStatus(item))}
                         </span>
-                        <div class="qty-selector" style="${!item.inStock ? 'display:none' : ''}">
+                        <div class="qty-selector" style="${!canOrder(item) ? 'display:none' : ''}">
                             <button class="qty-btn" onclick="adjustQty(${item.id}, -1)">-</button>
                             <span class="qty-display" id="qty-${item.id}">1</span>
                             <button class="qty-btn" onclick="adjustQty(${item.id}, 1)">+</button>
                         </div>
-                        <button class="add-cart-btn" onclick="addToCart(${item.id})" ${!item.inStock ? 'disabled' : ''}>
-                            ${item.inStock ? 'Add to Cart' : 'Out of Stock'}
+                        <button class="add-cart-btn" onclick="addToCart(${item.id})" ${!canOrder(item) ? 'disabled' : ''}>
+                            ${canOrder(item) ? 'Add to Cart' : 'Not Selling'}
                         </button>
                     </div>
                 `;
@@ -2614,6 +2704,11 @@
         // Cart Functions
         function addToCart(itemId) {
             const item = items.find(i => i.id === itemId);
+            if (!item) return;
+            if (!canOrder(item)) {
+                showToast('This item is not selling right now');
+                return;
+            }
             const qty = parseInt(document.getElementById(`qty-${itemId}`).textContent);
             
             const existing = cart.find(c => c.id === itemId);
@@ -3077,7 +3172,7 @@
                         ${item.price} ${getCurrencyLabel(item.currency || 'diamonds')}
                     </td>
                     <td>${item.quantity}</td>
-                    <td><span class="stock-badge ${item.inStock ? 'in-stock' : 'out-stock'}">${item.inStock ? 'Yes' : 'No'}</span></td>
+                    <td><span class="stock-badge ${statusClass(getItemStatus(item))}">${statusLabel(getItemStatus(item))}</span></td>
                     <td>
                         <button class="btn btn--ghost btn--sm" onclick="editItem(${item.id})" title="Edit item">
                             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
@@ -3099,7 +3194,8 @@
             const price = parseInt(document.getElementById('itemPrice').value);
             const quantity = parseInt(document.getElementById('itemQty').value);
             const description = document.getElementById('itemDesc').value.trim();
-            const inStock = document.getElementById('itemStock').value === 'true';
+            const statusVal = document.getElementById('itemStock').value;
+            const status = (statusVal === 'selling' || statusVal === 'available' || statusVal === 'not_selling') ? statusVal : 'selling';
 
             if (!name || !price || !quantity) {
                 showToast('Please fill in Name, Price and Quantity');
@@ -3114,14 +3210,15 @@
             if (editingItem) {
                 itemId = editingItem;
                 const existing = items.find(i => i.id === editingItem) || {};
-                payload = { ...existing, id: editingItem, name, category, currency, price, quantity, description, inStock };
+                payload = { ...existing, id: editingItem, name, category, currency, price, quantity, description, status };
+                delete payload.inStock;
                 editingItem = null;
                 document.getElementById('formTitle').textContent = 'Add New Item';
                 document.getElementById('saveBtn').textContent = 'Add Item';
                 document.getElementById('cancelBtn').style.display = 'none';
             } else {
                 itemId = Date.now();
-                payload = { id: itemId, name, category, currency, price, quantity, description, inStock };
+                payload = { id: itemId, name, category, currency, price, quantity, description, status };
             }
 
             setDoc(doc(db, 'items', String(itemId)), payload)
@@ -3141,7 +3238,7 @@
             document.getElementById('itemPrice').value = item.price;
             document.getElementById('itemQty').value = item.quantity;
             document.getElementById('itemDesc').value = item.description;
-            document.getElementById('itemStock').value = item.inStock.toString();
+            document.getElementById('itemStock').value = getItemStatus(item);
             
             const currency = item.currency || 'diamonds';
             selectCurrency(currency);
@@ -3173,7 +3270,7 @@
             document.getElementById('itemPrice').value = '';
             document.getElementById('itemQty').value = '';
             document.getElementById('itemDesc').value = '';
-            document.getElementById('itemStock').value = 'true';
+            document.getElementById('itemStock').value = 'selling';
             selectCurrency('diamonds');
             document.getElementById('itemCurrency').value = 'diamonds';
         }
