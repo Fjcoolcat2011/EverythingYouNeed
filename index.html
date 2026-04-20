@@ -2415,7 +2415,11 @@
 
             // MAINTENANCE / UPDATE MODE (single doc at config/maintenance)
             onSnapshot(doc(db, 'config', 'maintenance'), snap => {
-                __maintenance = snap.exists() && !!snap.data().enabled;
+                const data = snap.exists() ? (snap.data() || {}) : {};
+                __maintenance = !!data.enabled;
+                // updatedAt is written every toggle; acts as an epoch so
+                // existing unlocks are invalidated on any toggle.
+                __maintenanceUpdatedAt = data.updatedAt || '';
                 applyMaintenanceUI();
             });
 
@@ -3171,16 +3175,32 @@
         }
 
         // ===== Update / Maintenance Mode =====
-        // Firestore doc: config/maintenance { enabled: bool }
+        // Firestore doc: config/maintenance { enabled: bool, updatedAt: ISO }
         // The overlay hides the shop for everyone. Staff bypass via:
         //   (a) being the logged-in owner on this device, OR
-        //   (b) typing the unlock code below the overlay (persisted per-device).
+        //   (b) typing the unlock code below the overlay. The unlock is
+        //       stored in sessionStorage (so it disappears the moment the
+        //       tab/browser is closed) AND is tied to the current
+        //       maintenance.updatedAt — so if the owner turns Update Mode
+        //       off and on again, every previous unlock is invalidated and
+        //       the code has to be typed again.
         const MAINTENANCE_UNLOCK_CODE = 'Unlock121';
+        let __maintenanceUpdatedAt = '';
+
+        function isMaintenanceUnlocked() {
+            // The unlock is valid only if it was recorded against the CURRENT
+            // maintenance.updatedAt value. Any new toggle cycles the value and
+            // invalidates prior unlocks automatically.
+            const rec = sessionStorage.getItem('shopMaintenanceUnlockedAt');
+            if (!rec) return false;
+            if (!__maintenanceUpdatedAt) return false;
+            return rec === __maintenanceUpdatedAt;
+        }
 
         function applyMaintenanceUI() {
             const overlay = document.getElementById('maintenanceOverlay');
             if (!overlay) return;
-            const unlocked = localStorage.getItem('shopMaintenanceUnlocked') === '1';
+            const unlocked = isMaintenanceUnlocked();
             const isOwner = isOwnerLoggedIn();
             const show = __maintenance && !unlocked && !isOwner;
             overlay.classList.toggle('active', show);
@@ -3221,10 +3241,15 @@
         function checkMaintenanceUnlock(input) {
             if (!input) return;
             if (input.value === MAINTENANCE_UNLOCK_CODE) {
-                localStorage.setItem('shopMaintenanceUnlocked', '1');
+                // Record unlock against the current maintenance.updatedAt value.
+                // sessionStorage: lost when the tab/browser closes.
+                // Tied to updatedAt: lost when owner toggles mode on/off.
+                sessionStorage.setItem('shopMaintenanceUnlockedAt', __maintenanceUpdatedAt || '');
+                // Also clean up any legacy permanent unlock from the previous build.
+                try { localStorage.removeItem('shopMaintenanceUnlocked'); } catch (e) {}
                 input.value = '';
                 applyMaintenanceUI();
-                showToast('Unlocked — welcome back');
+                showToast('Unlocked for this session');
             }
         }
 
