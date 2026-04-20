@@ -1518,6 +1518,33 @@
             animation: pulse 2s infinite;
         }
 
+        /* ===== Site footer ===== */
+        .site-footer {
+            margin-top: 4rem;
+            padding: 2rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.015);
+            text-align: center;
+        }
+        .footer-inner {
+            max-width: 960px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .footer-disclaimer {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin: 0;
+        }
+        .footer-copy {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin: 0;
+        }
+
         /* ===== Maintenance overlay ===== */
         .maintenance-overlay {
             position: fixed;
@@ -2291,6 +2318,14 @@
         </div>
     </div>
 
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <p class="footer-disclaimer">Not an official site of AetheriaMC. Made by a player.</p>
+            <p class="footer-copy">&copy; <span id="footerYear"></span> Everything You Need. All rights reserved.</p>
+        </div>
+    </footer>
+
     <!-- Firebase SDK + Firestore bridge (real-time cross-device sync) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
@@ -2477,6 +2512,8 @@
             updateOwnerTicketBadge();
             applyMaintenanceUI();
             restoreOwnerSession();
+            const yr = document.getElementById('footerYear');
+            if (yr) yr.textContent = new Date().getFullYear();
         }
         document.addEventListener('DOMContentLoaded', boot);
         window.addEventListener('fsb-ready', boot);
