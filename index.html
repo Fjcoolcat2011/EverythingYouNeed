@@ -1,223 +1,169 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang='en'>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Litematica Material List Viewer</title>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>Minecraft Material List Viewer Pro</title>
 <style>
-body{font-family:Arial,sans-serif;margin:0;background:#111827;color:#e5e7eb}
-.container{max-width:1100px;margin:auto;padding:24px}
-.card{background:#1f2937;border-radius:18px;padding:20px;margin-bottom:20px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
-h1{margin-top:0}
-input,button{border:none;border-radius:12px;padding:12px 14px;font-size:15px}
-button{background:#22c55e;color:#08110c;font-weight:700;cursor:pointer}
-button:hover{filter:brightness(1.08)}
-.secondary{background:#374151;color:white}
-.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-#dropzone{border:2px dashed #4b5563;padding:30px;text-align:center;border-radius:18px;cursor:pointer}
-#dropzone.drag{border-color:#22c55e;background:#172b1d}
-#materials{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
-.item{background:#111827;padding:14px;border-radius:14px;border:1px solid #374151}
-.item.done{opacity:.6}
-.itemhead{display:flex;justify-content:space-between;gap:10px;font-weight:bold;margin-bottom:8px}
-.small{color:#9ca3af;font-size:13px}
-.search{flex:1;min-width:240px}
-.progressWrap{background:#374151;border-radius:999px;height:20px;overflow:hidden}
-.progressBar{height:100%;width:0%;background:#22c55e;transition:.3s}
-.badge{background:#374151;padding:5px 10px;border-radius:999px;font-size:12px}
+body{margin:0;font-family:Inter,Arial;background:#0b1020;color:#eef2ff}
+.wrap{max-width:1300px;margin:auto;padding:24px}
+.hero{background:linear-gradient(135deg,#172554,#166534);padding:28px;border-radius:28px;box-shadow:0 10px 35px rgba(0,0,0,.35)}
+h1{margin:0 0 10px;font-size:42px}
+.drop{margin-top:20px;border:3px dashed #60a5fa;border-radius:24px;padding:40px;text-align:center;cursor:pointer;background:#111a34}
+.drop.drag{background:#122443;border-color:#4ade80}
+input,button{border:none;border-radius:16px;padding:12px 16px;font-size:15px}
+button{cursor:pointer;font-weight:700;background:#4ade80}
+button:hover{transform:translateY(-1px)}
+.toolbar,.stats{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.panel{background:#141c35;margin-top:20px;padding:20px;border-radius:24px}
+.search{flex:1;min-width:280px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:18px;margin-top:20px}
+.card{background:#0f172a;border:1px solid #243049;border-radius:22px;padding:18px;display:flex;gap:16px;align-items:center;transition:.2s}
+.card:hover{transform:translateY(-2px)}
+.icon{width:56px;height:56px;border-radius:16px;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden}
+.icon img{width:100%;height:100%;object-fit:cover}
+.name{font-size:20px;font-weight:700}
+.sub{color:#94a3b8;font-size:13px}
+.amount{font-size:24px;font-weight:800}
+.spacer{flex:1}
+.done{opacity:.55}
+.badge{background:#26324d;padding:8px 12px;border-radius:999px}
+.bar{height:22px;background:#1e293b;border-radius:999px;overflow:hidden;margin-top:10px}
+.fill{height:100%;width:0;background:#4ade80}
+small{color:#94a3b8}
 .hidden{display:none}
-pre{white-space:pre-wrap;background:#0b1220;padding:12px;border-radius:12px;overflow:auto}
 </style>
 </head>
 <body>
-<div class="container">
-<div class="card">
-<h1>⛏ Litematica Material List Viewer</h1>
-<p>Upload your exported Litematica JSON and get a searchable checklist / shopping list.</p>
-<div id="dropzone">
-<input type="file" id="fileInput" accept=".json" hidden>
-<p><b>Click to upload</b> or drag your material-list JSON here</p>
+<div class='wrap'>
+<div class='hero'>
+<h1>⛏ Minecraft Material Viewer Pro</h1>
+<p>Built for your exported raw material file format (RawItem / TotalEstimate) fileciteturn0file0<br>Shows item icons, names, amounts, stacks, search, checklist, sorting, and crafting raw-material mode.</p>
+<div class='drop' id='drop'>
+<input hidden type='file' id='file' accept='.json'>
+<h2>Drop your Litematica JSON here or click to upload</h2>
 </div>
 </div>
 
-<div id="app" class="hidden">
-<div class="card">
-<div class="row">
-<input class="search" id="search" placeholder="Search materials... (stone, glass, oak)">
-<button onclick="checkAll(false)">Check All</button>
-<button class="secondary" onclick="checkAll(true)">Uncheck All</button>
-<button onclick="exportChecklist()">Export Progress</button>
-<span class="badge" id="stats">0 Items</span>
+<div id='app' class='hidden'>
+<div class='panel'>
+<div class='toolbar'>
+<input id='search' class='search' placeholder='Search cobblestone, moss, quartz...'>
+<button onclick='sortByAmount()'>Sort by Amount</button>
+<button onclick='toggleMode()' id='modeBtn'>Showing Raw Materials</button>
+<button onclick='checkAll()'>Check All</button>
 </div>
-<br>
-<div class="small">Gathering Progress</div>
-<div class="progressWrap"><div class="progressBar" id="progressBar"></div></div>
-<div id="progressText" class="small" style="margin-top:8px"></div>
+<div class='stats' style='margin-top:14px'>
+<div class='badge' id='countBadge'></div>
+<div class='badge' id='stackBadge'></div>
+<div class='badge' id='progressLabel'></div>
 </div>
-
-<div class="card">
-<h3>Materials</h3>
-<div id="materials"></div>
-</div>
+<div class='bar'><div id='fill' class='fill'></div></div>
 </div>
 
-<div class="card">
-<details>
-<summary>JSON didn't parse? Open Debug Panel</summary>
-<pre id="debug"></pre>
-</details>
+<div class='grid' id='grid'></div>
 </div>
 </div>
 
 <script>
-let materials=[];
-const fileInput=document.getElementById('fileInput');
-const drop=document.getElementById('dropzone');
-const materialsDiv=document.getElementById('materials');
-const search=document.getElementById('search');
+let data=[];
+let rawMode=true;
+let sorted=false;
+const iconBase='https://mc.nerothe.com/img/1.21.1/'; // minecraft item textures CDN
+const emojiFallback={stone:'🪨',oak:'🪵',spruce:'🪵',iron:'⛓️',glass:'🪟',sand:'🏖️',dirt:'🟫',moss:'🌿',water:'💧',default:'📦'};
 
-drop.onclick=()=>fileInput.click();
-fileInput.onchange=e=>loadFile(e.target.files[0]);
+const drop=document.getElementById('drop');
+const file=document.getElementById('file');
+drop.onclick=()=>file.click();
+file.onchange=e=>load(e.target.files[0]);
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag')}));
+drop.addEventListener('drop',e=>load(e.dataTransfer.files[0]));
+document.addEventListener('input',e=>{if(e.target.id==='search')render()});
 
-['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{
- e.preventDefault();drop.classList.add('drag');
-}));
-['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{
- e.preventDefault();drop.classList.remove('drag');
-}));
-drop.addEventListener('drop',e=>loadFile(e.dataTransfer.files[0]));
-
-search.addEventListener('input',render);
-
-function loadFile(file){
- if(!file) return;
- const reader=new FileReader();
- reader.onload=e=>{
-   try{
-    const data=JSON.parse(e.target.result);
-    document.getElementById('debug').textContent=JSON.stringify(data,null,2).slice(0,8000);
-    materials=extractMaterials(data);
-    if(!materials.length){
-      alert('Could not auto-detect materials structure. Your export may use a different schema. Open Debug Panel below and tell me the format if you want to improve parser.');
-      return;
-    }
-    loadSavedProgress();
-    document.getElementById('app').classList.remove('hidden');
-    render();
-   }catch(err){
-    alert('Invalid JSON file');
+function load(f){
+const r=new FileReader();
+r.onload=e=>{
+ const json=JSON.parse(e.target.result);
+ // built specifically for your uploaded format
+ data=json.map(x=>(
+   {name:clean(x.RawItem),
+    amount:x.TotalEstimate,
+    done:false,
+    results:(x.Results||[]).map(r=>({name:clean(r.ResultItem),amount:r.ResultTotal}))
    }
- }
- reader.readAsText(file);
+ ));
+ document.getElementById('app').classList.remove('hidden');
+ render();
+}
+r.readAsText(f)
 }
 
-function extractMaterials(data){
- let found=[];
- 
- // common patterns
- if(Array.isArray(data.materials)){
-   found=data.materials.map(normalize).filter(Boolean);
- }
- else if(Array.isArray(data.items)){
-   found=data.items.map(normalize).filter(Boolean);
- }
- else {
-   // deep search fallback
-   walk(data);
- }
- return mergeDuplicates(found);
- 
- function walk(obj){
-   if(!obj||typeof obj!=='object') return;
-   if(Array.isArray(obj)){
-     obj.forEach(walk);return;
-   }
-   if((obj.item||obj.name||obj.id) && (obj.count||obj.total||obj.amount)){
-      const n=normalize(obj);
-      if(n) found.push(n);
-   }
-   for(const k in obj) walk(obj[k]);
- }
-}
+function clean(id){return id.replace('minecraft:','')}
+function pretty(n){return n.split('_').map(w=>w[0].toUpperCase()+w.slice(1)).join(' ')}
+function stacks(n){return Math.floor(n/64)+(n%64? ' + '+(n%64):'')}
 
-function normalize(x){
- const name=(x.item||x.name||x.id||'').replace('minecraft:','');
- const count=Number(x.count||x.total||x.amount||0);
- if(!name||!count) return null;
- return {name,count,done:false};
+function icon(name){
+ return `<img src="${iconBase}${name}.png" onerror="this.outerHTML='${fallback(name)}'">`
 }
-
-function mergeDuplicates(arr){
- const map={};
- arr.forEach(i=>map[i.name]=(map[i.name]||0)+i.count);
- return Object.entries(map).map(([name,count])=>({name,count,done:false}));
+function fallback(name){
+ for(let k in emojiFallback) if(name.includes(k)) return `<div style='font-size:30px'>${emojiFallback[k]}</div>`;
+ return `<div style='font-size:30px'>📦</div>`
 }
 
 function render(){
- const q=search.value.toLowerCase();
- const filtered=materials.filter(m=>m.name.includes(q));
- materialsDiv.innerHTML='';
- filtered.sort((a,b)=>a.done-b.done||b.count-a.count);
- filtered.forEach((m,i)=>{
-   const idx=materials.findIndex(x=>x.name===m.name);
-   const div=document.createElement('div');
-   div.className='item '+(m.done?'done':'');
-   div.innerHTML=`
-    <div class="itemhead">
-      <span>${prettyName(m.name)}</span>
-      <span>${m.count.toLocaleString()}</span>
-    </div>
-    <div class="row">
-      <button onclick="toggleDone(${idx})">${m.done?'Collected ✓':'Mark Collected'}</button>
-      <span class='small'>${m.name}</span>
-    </div>`;
-   materialsDiv.appendChild(div);
+ let list=[];
+ if(rawMode){
+   list=[...data];
+ } else {
+   const merged={};
+   data.forEach(d=>d.results.forEach(r=>merged[r.name]=(merged[r.name]||0)+r.amount));
+   list=Object.entries(merged).map(([name,amount])=>({name,amount,done:false,results:[]}));
+ }
+ if(sorted) list.sort((a,b)=>b.amount-a.amount);
+ const q=document.getElementById('search').value.toLowerCase();
+ if(q) list=list.filter(x=>x.name.includes(q));
+ const grid=document.getElementById('grid');
+ grid.innerHTML='';
+ list.forEach(item=>{
+  const idx=data.findIndex(d=>d.name===item.name);
+  const done=idx>=0?data[idx].done:false;
+  const div=document.createElement('div');
+  div.className='card '+(done?'done':'');
+  div.innerHTML=`
+   <div class='icon'>${icon(item.name)}</div>
+   <div>
+    <div class='name'>${pretty(item.name)}</div>
+    <div class='sub'>${item.name}</div>
+    <small>${Math.ceil(item.amount/64)} stacks (${stacks(item.amount)})</small>
+   </div>
+   <div class='spacer'></div>
+   <div style='text-align:right'>
+     <div class='amount'>${item.amount.toLocaleString()}</div>
+     ${rawMode?`<button onclick='toggleDone(${idx})'>${done?'✓ Got it':'Collect'}</button>`:''}
+   </div>`;
+   grid.appendChild(div)
  })
- document.getElementById('stats').textContent=`${materials.length} Items`;
- updateProgress();
+ updateStats(list)
 }
 
-function prettyName(n){
- return n.split('_').map(x=>x[0].toUpperCase()+x.slice(1)).join(' ')
+function updateStats(list){
+ let total=list.reduce((a,b)=>a+b.amount,0)
+ document.getElementById('countBadge').textContent='Items: '+list.length;
+ document.getElementById('stackBadge').textContent='Total blocks: '+total.toLocaleString();
+ let done=data.filter(x=>x.done).length;
+ let pct=Math.round(done/data.length*100)||0;
+ document.getElementById('progressLabel').textContent='Gathered '+pct+'%';
+ document.getElementById('fill').style.width=pct+'%';
 }
 
-function toggleDone(i){
- materials[i].done=!materials[i].done;
- saveProgress();
+function toggleDone(i){data[i].done=!data[i].done;render()}
+function checkAll(){data.forEach(x=>x.done=true);render()}
+function sortByAmount(){sorted=!sorted;render()}
+function toggleMode(){
+ rawMode=!rawMode;
+ document.getElementById('modeBtn').textContent=rawMode?'Showing Raw Materials':'Showing Crafted Result Items';
  render();
-}
-
-function checkAll(uncheck){
- materials.forEach(m=>m.done=!uncheck);
- saveProgress();
- render();
-}
-
-function updateProgress(){
- const done=materials.filter(x=>x.done).length;
- const pct=materials.length?Math.round(done/materials.length*100):0;
- document.getElementById('progressBar').style.width=pct+'%';
- document.getElementById('progressText').textContent=`${done}/${materials.length} material types collected (${pct}%)`;
-}
-
-function saveProgress(){
- localStorage.setItem('litematicaChecklist',JSON.stringify(materials));
-}
-function loadSavedProgress(){
- const saved=JSON.parse(localStorage.getItem('litematicaChecklist')||'null');
- if(!saved) return;
- saved.forEach(s=>{
-  const match=materials.find(m=>m.name===s.name);
-  if(match) match.done=s.done;
- })
-}
-
-function exportChecklist(){
- const blob=new Blob([JSON.stringify(materials,null,2)],{type:'application/json'});
- const a=document.createElement('a');
- a.href=URL.createObjectURL(blob);
- a.download='material-progress.json';
- a.click();
 }
 </script>
 </body>
