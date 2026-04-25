@@ -60,12 +60,18 @@ justify-content:center;
 width:48px;
 height:48px;
 image-rendering: pixelated;
+object-fit: contain;
+background:#0b1224;
+border-radius:8px;
+padding:4px;
 }
 
 .name{font-size:18px;font-weight:700}
 .sub{font-size:12px;color:#94a3b8}
 .amount{font-size:20px;font-weight:800;margin-left:auto}
+
 .hidden{display:none}
+
 button{
 background:#4ade80;
 border:none;
@@ -98,9 +104,6 @@ cursor:pointer;
 
 <script>
 let data=[];
-
-/* ✅ WORKING ITEM ICON API */
-const iconBase = "https://mc-heads.net/item/";
 
 /* ---------------- FILE ---------------- */
 const drop=document.getElementById('drop');
@@ -138,16 +141,27 @@ return id.replace("minecraft:","");
 }
 
 function pretty(n){
-return n.split("_").map(w=>w[0].toUpperCase()+w.slice(1)).join(" ");
+return n.split("_")
+.map(w=>w[0].toUpperCase()+w.slice(1))
+.join(" ");
 }
 
-/* ✅ FIXED ICON SYSTEM */
+function normalize(id){
+return id.toLowerCase().replace(/:/g,"_");
+}
+
+/* ---------------- ICON SYSTEM (FIXED) ---------------- */
 function icon(name){
-const id = name.toLowerCase();
+const id = normalize(name);
 
 return `
-<img src="${iconBase}${id}"
-onerror="this.src='https://mc-heads.net/item/stone'">
+<img src="https://minecraft.wiki/images/${id}.png"
+onerror="
+this.onerror=null;
+this.src='https://mc-heads.net/block/${id}';
+this.onerror=function(){
+this.src='https://mc-heads.net/item/stone';
+}">
 `;
 }
 
