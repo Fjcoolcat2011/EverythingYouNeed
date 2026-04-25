@@ -71,15 +71,6 @@ padding:4px;
 .amount{font-size:20px;font-weight:800;margin-left:auto}
 
 .hidden{display:none}
-
-button{
-background:#4ade80;
-border:none;
-padding:8px 12px;
-border-radius:10px;
-font-weight:bold;
-cursor:pointer;
-}
 </style>
 </head>
 
@@ -137,28 +128,28 @@ r.readAsText(f);
 
 /* ---------------- HELPERS ---------------- */
 function clean(id){
-return id.replace("minecraft:","");
+return id.replace("minecraft:","").toLowerCase();
 }
 
 function pretty(n){
 return n.split("_")
-.map(w=>w[0].toUpperCase()+w.slice(1))
+.map(w=>w.charAt(0).toUpperCase()+w.slice(1))
 .join(" ");
 }
 
-function normalize(id){
-return id.toLowerCase().replace(/:/g,"_");
-}
-
-/* ---------------- ICON SYSTEM (FIXED) ---------------- */
+/* ---------------- ICON FIX (REAL WORKING SOURCE) ---------------- */
 function icon(name){
-const id = normalize(name);
+const id = name.toLowerCase();
+
+/* Mojang texture repo (MOST RELIABLE PUBLIC SOURCE) */
+const itemURL = `https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/master/assets/minecraft/textures/item/${id}.png`;
+const blockURL = `https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/master/assets/minecraft/textures/block/${id}.png`;
 
 return `
-<img src="https://minecraft.wiki/images/${id}.png"
+<img src="${itemURL}"
 onerror="
 this.onerror=null;
-this.src='https://mc-heads.net/block/${id}';
+this.src='${blockURL}';
 this.onerror=function(){
 this.src='https://mc-heads.net/item/stone';
 }">
