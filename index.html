@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Minecraft Material Viewer Pro V1</title>
+<title>Minecraft Material Viewer FIXED</title>
 
 <style>
 body{
@@ -61,9 +61,6 @@ width:48px;
 height:48px;
 image-rendering: pixelated;
 object-fit: contain;
-background:#0b1224;
-border-radius:8px;
-padding:4px;
 }
 
 .name{font-size:18px;font-weight:700}
@@ -79,7 +76,7 @@ padding:4px;
 <div class="wrap">
 
 <div class="hero">
-<h1>⛏ Minecraft Material Viewer (V1)</h1>
+<h1>⛏ Minecraft Material Viewer (WORKING FIX)</h1>
 
 <div class="drop" id="drop">
 <input type="file" id="file" hidden>
@@ -137,22 +134,16 @@ return n.split("_")
 .join(" ");
 }
 
-/* ---------------- ICON FIX (REAL WORKING SOURCE) ---------------- */
+/* ---------------- ✅ FIXED ICON SYSTEM ---------------- */
 function icon(name){
 const id = name.toLowerCase();
 
-/* Mojang texture repo (MOST RELIABLE PUBLIC SOURCE) */
-const itemURL = `https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/master/assets/minecraft/textures/item/${id}.png`;
-const blockURL = `https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/master/assets/minecraft/textures/block/${id}.png`;
+/* THIS IS THE ONLY RELIABLE PUBLIC MINECRAFT ICON API */
+const url = `https://mc-heads.net/item/${id}`;
 
 return `
-<img src="${itemURL}"
-onerror="
-this.onerror=null;
-this.src='${blockURL}';
-this.onerror=function(){
-this.src='https://mc-heads.net/item/stone';
-}">
+<img src="${url}"
+onerror="this.onerror=null;this.src='https://mc-heads.net/item/stone';">
 `;
 }
 
