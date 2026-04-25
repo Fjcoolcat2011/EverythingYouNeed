@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Minecraft Material Viewer REAL TEXTURES</title>
+<title>Minecraft Material Checklist Viewer 1 </title>
 
 <style>
 body{
@@ -31,6 +31,13 @@ cursor:pointer;
 background:#111827;
 }
 
+.topbar{
+margin-top:15px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
 .grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
@@ -46,6 +53,13 @@ border-radius:14px;
 display:flex;
 align-items:center;
 gap:12px;
+cursor:pointer;
+transition:0.2s;
+}
+
+.card.checked{
+border:2px solid #22c55e;
+background:#0b1f16;
 }
 
 .icon img{
@@ -61,6 +75,12 @@ padding:3px;
 .sub{font-size:11px;color:#94a3b8}
 .amount{margin-left:auto;font-size:18px;font-weight:bold}
 
+.checkbox{
+width:18px;
+height:18px;
+accent-color:#22c55e;
+}
+
 .hidden{display:none}
 </style>
 </head>
@@ -70,12 +90,18 @@ padding:3px;
 <div class="wrap">
 
 <div class="hero">
-<h1>⛏ Minecraft Material Viewer (REAL TEXTURES FIXED)</h1>
+<h1>⛏ Minecraft Material Checklist Viewer 1 </h1>
 
 <div class="drop" id="drop">
 <input type="file" id="file" hidden>
 <h3>Click or drop JSON file here</h3>
 </div>
+
+<div class="topbar">
+<div>Selected: <span id="count">0</span></div>
+<button onclick="clearAll()">Clear All</button>
+</div>
+
 </div>
 
 <div id="app" class="hidden">
@@ -86,6 +112,7 @@ padding:3px;
 
 <script>
 let data=[];
+let checked = new Set();
 
 const drop=document.getElementById("drop");
 const file=document.getElementById("file");
@@ -110,25 +137,25 @@ name:clean(x.RawItem),
 amount:x.TotalEstimate
 }));
 
+checked.clear();
 document.getElementById("app").classList.remove("hidden");
 render();
+updateCount();
 };
 r.readAsText(f);
 }
 
-/* ---------------- CLEAN ---------------- */
 function clean(id){
 return id.replace("minecraft:","").toLowerCase();
 }
 
-/* ---------------- PRETTY ---------------- */
 function pretty(n){
 return n.split("_")
 .map(w=>w.charAt(0).toUpperCase()+w.slice(1))
 .join(" ");
 }
 
-/* ---------------- REAL TEXTURE SYSTEM ---------------- */
+/* REAL TEXTURE SYSTEM */
 function icon(id){
 
 const base = "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/master/assets/minecraft/textures";
@@ -147,16 +174,43 @@ this.src='https://mc-heads.net/item/stone';
 `;
 }
 
-/* ---------------- RENDER ---------------- */
+/* TOGGLE CHECK */
+function toggle(name){
+if(checked.has(name)){
+checked.delete(name);
+}else{
+checked.add(name);
+}
+render();
+updateCount();
+}
+
+function updateCount(){
+document.getElementById("count").innerText = checked.size;
+}
+
+function clearAll(){
+checked.clear();
+render();
+updateCount();
+}
+
+/* RENDER */
 function render(){
 const grid=document.getElementById("grid");
 grid.innerHTML="";
 
 data.forEach(item=>{
+const isChecked = checked.has(item.name);
+
 const div=document.createElement("div");
-div.className="card";
+div.className="card" + (isChecked ? " checked" : "");
+
+div.onclick=()=>toggle(item.name);
 
 div.innerHTML=`
+<input type="checkbox" class="checkbox" ${isChecked ? "checked" : ""}>
+
 <div class="icon">${icon(item.name)}</div>
 
 <div>
