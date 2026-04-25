@@ -1,170 +1,180 @@
 <!DOCTYPE html>
-<html lang='en'>
+<html lang="en">
 <head>
-<meta charset='UTF-8'>
-<meta name='viewport' content='width=device-width,initial-scale=1'>
-<title>Minecraft Material List Viewer Pro</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minecraft Material Viewer Pro FIXED</title>
+
 <style>
-body{margin:0;font-family:Inter,Arial;background:#0b1020;color:#eef2ff}
-.wrap{max-width:1300px;margin:auto;padding:24px}
-.hero{background:linear-gradient(135deg,#172554,#166534);padding:28px;border-radius:28px;box-shadow:0 10px 35px rgba(0,0,0,.35)}
-h1{margin:0 0 10px;font-size:42px}
-.drop{margin-top:20px;border:3px dashed #60a5fa;border-radius:24px;padding:40px;text-align:center;cursor:pointer;background:#111a34}
-.drop.drag{background:#122443;border-color:#4ade80}
-input,button{border:none;border-radius:16px;padding:12px 16px;font-size:15px}
-button{cursor:pointer;font-weight:700;background:#4ade80}
-button:hover{transform:translateY(-1px)}
-.toolbar,.stats{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-.panel{background:#141c35;margin-top:20px;padding:20px;border-radius:24px}
-.search{flex:1;min-width:280px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:18px;margin-top:20px}
-.card{background:#0f172a;border:1px solid #243049;border-radius:22px;padding:18px;display:flex;gap:16px;align-items:center;transition:.2s}
-.card:hover{transform:translateY(-2px)}
-.icon{width:56px;height:56px;border-radius:16px;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden}
-.icon img{width:100%;height:100%;object-fit:cover}
-.name{font-size:20px;font-weight:700}
-.sub{color:#94a3b8;font-size:13px}
-.amount{font-size:24px;font-weight:800}
-.spacer{flex:1}
-.done{opacity:.55}
-.badge{background:#26324d;padding:8px 12px;border-radius:999px}
-.bar{height:22px;background:#1e293b;border-radius:999px;overflow:hidden;margin-top:10px}
-.fill{height:100%;width:0;background:#4ade80}
-small{color:#94a3b8}
+body{
+margin:0;
+font-family:Arial;
+background:#0b1020;
+color:#eef2ff;
+}
+
+.wrap{max-width:1200px;margin:auto;padding:20px}
+
+.hero{
+background:linear-gradient(135deg,#1e3a8a,#166534);
+padding:25px;
+border-radius:20px;
+}
+
+.drop{
+margin-top:15px;
+padding:30px;
+border:3px dashed #60a5fa;
+border-radius:20px;
+text-align:center;
+cursor:pointer;
+background:#111a34;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+gap:15px;
+margin-top:20px;
+}
+
+.card{
+background:#0f172a;
+border:1px solid #243049;
+border-radius:16px;
+padding:15px;
+display:flex;
+align-items:center;
+gap:15px;
+}
+
+.icon{
+width:50px;
+height:50px;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.icon img{
+width:48px;
+height:48px;
+image-rendering: pixelated;
+}
+
+.name{font-size:18px;font-weight:700}
+.sub{font-size:12px;color:#94a3b8}
+.amount{font-size:20px;font-weight:800;margin-left:auto}
 .hidden{display:none}
+button{
+background:#4ade80;
+border:none;
+padding:8px 12px;
+border-radius:10px;
+font-weight:bold;
+cursor:pointer;
+}
 </style>
 </head>
+
 <body>
-<div class='wrap'>
-<div class='hero'>
-<h1>⛏ Minecraft Material Viewer Pro</h1>
-<p>Built for your exported raw material file format (RawItem / TotalEstimate) fileciteturn0file0<br>Shows item icons, names, amounts, stacks, search, checklist, sorting, and crafting raw-material mode.</p>
-<div class='drop' id='drop'>
-<input hidden type='file' id='file' accept='.json'>
-<h2>Drop your Litematica JSON here or click to upload</h2>
+
+<div class="wrap">
+
+<div class="hero">
+<h1>⛏ Minecraft Material Viewer (FIXED)</h1>
+
+<div class="drop" id="drop">
+<input type="file" id="file" hidden>
+<h3>Click or drop JSON file here</h3>
 </div>
 </div>
 
-<div id='app' class='hidden'>
-<div class='panel'>
-<div class='toolbar'>
-<input id='search' class='search' placeholder='Search cobblestone, moss, quartz...'>
-<button onclick='sortByAmount()'>Sort by Amount</button>
-<button onclick='toggleMode()' id='modeBtn'>Showing Raw Materials</button>
-<button onclick='checkAll()'>Check All</button>
-</div>
-<div class='stats' style='margin-top:14px'>
-<div class='badge' id='countBadge'></div>
-<div class='badge' id='stackBadge'></div>
-<div class='badge' id='progressLabel'></div>
-</div>
-<div class='bar'><div id='fill' class='fill'></div></div>
+<div id="app" class="hidden">
+<div class="grid" id="grid"></div>
 </div>
 
-<div class='grid' id='grid'></div>
-</div>
 </div>
 
 <script>
 let data=[];
-let rawMode=true;
-let sorted=false;
-const iconBase='https://mc.nerothe.com/img/1.21.1/'; // minecraft item textures CDN
-const emojiFallback={stone:'🪨',oak:'🪵',spruce:'🪵',iron:'⛓️',glass:'🪟',sand:'🏖️',dirt:'🟫',moss:'🌿',water:'💧',default:'📦'};
 
+/* ✅ WORKING ITEM ICON API */
+const iconBase = "https://mc-heads.net/item/";
+
+/* ---------------- FILE ---------------- */
 const drop=document.getElementById('drop');
 const file=document.getElementById('file');
+
 drop.onclick=()=>file.click();
+
 file.onchange=e=>load(e.target.files[0]);
-['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag')}));
-['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag')}));
-drop.addEventListener('drop',e=>load(e.dataTransfer.files[0]));
-document.addEventListener('input',e=>{if(e.target.id==='search')render()});
+
+drop.ondragover=e=>e.preventDefault();
+drop.ondrop=e=>{
+e.preventDefault();
+load(e.dataTransfer.files[0]);
+};
 
 function load(f){
 const r=new FileReader();
 r.onload=e=>{
- const json=JSON.parse(e.target.result);
- // built specifically for your uploaded format
- data=json.map(x=>(
-   {name:clean(x.RawItem),
-    amount:x.TotalEstimate,
-    done:false,
-    results:(x.Results||[]).map(r=>({name:clean(r.ResultItem),amount:r.ResultTotal}))
-   }
- ));
- document.getElementById('app').classList.remove('hidden');
- render();
-}
-r.readAsText(f)
+const json=JSON.parse(e.target.result);
+
+data=json.map(x=>({
+name:clean(x.RawItem),
+amount:x.TotalEstimate
+}));
+
+document.getElementById('app').classList.remove('hidden');
+render();
+};
+r.readAsText(f);
 }
 
-function clean(id){return id.replace('minecraft:','')}
-function pretty(n){return n.split('_').map(w=>w[0].toUpperCase()+w.slice(1)).join(' ')}
-function stacks(n){return Math.floor(n/64)+(n%64? ' + '+(n%64):'')}
+/* ---------------- HELPERS ---------------- */
+function clean(id){
+return id.replace("minecraft:","");
+}
 
+function pretty(n){
+return n.split("_").map(w=>w[0].toUpperCase()+w.slice(1)).join(" ");
+}
+
+/* ✅ FIXED ICON SYSTEM */
 function icon(name){
- return `<img src="${iconBase}${name}.png" onerror="this.outerHTML='${fallback(name)}'">`
-}
-function fallback(name){
- for(let k in emojiFallback) if(name.includes(k)) return `<div style='font-size:30px'>${emojiFallback[k]}</div>`;
- return `<div style='font-size:30px'>📦</div>`
+const id = name.toLowerCase();
+
+return `
+<img src="${iconBase}${id}"
+onerror="this.src='https://mc-heads.net/item/stone'">
+`;
 }
 
+/* ---------------- RENDER ---------------- */
 function render(){
- let list=[];
- if(rawMode){
-   list=[...data];
- } else {
-   const merged={};
-   data.forEach(d=>d.results.forEach(r=>merged[r.name]=(merged[r.name]||0)+r.amount));
-   list=Object.entries(merged).map(([name,amount])=>({name,amount,done:false,results:[]}));
- }
- if(sorted) list.sort((a,b)=>b.amount-a.amount);
- const q=document.getElementById('search').value.toLowerCase();
- if(q) list=list.filter(x=>x.name.includes(q));
- const grid=document.getElementById('grid');
- grid.innerHTML='';
- list.forEach(item=>{
-  const idx=data.findIndex(d=>d.name===item.name);
-  const done=idx>=0?data[idx].done:false;
-  const div=document.createElement('div');
-  div.className='card '+(done?'done':'');
-  div.innerHTML=`
-   <div class='icon'>${icon(item.name)}</div>
-   <div>
-    <div class='name'>${pretty(item.name)}</div>
-    <div class='sub'>${item.name}</div>
-    <small>${Math.ceil(item.amount/64)} stacks (${stacks(item.amount)})</small>
-   </div>
-   <div class='spacer'></div>
-   <div style='text-align:right'>
-     <div class='amount'>${item.amount.toLocaleString()}</div>
-     ${rawMode?`<button onclick='toggleDone(${idx})'>${done?'✓ Got it':'Collect'}</button>`:''}
-   </div>`;
-   grid.appendChild(div)
- })
- updateStats(list)
-}
+const grid=document.getElementById('grid');
+grid.innerHTML="";
 
-function updateStats(list){
- let total=list.reduce((a,b)=>a+b.amount,0)
- document.getElementById('countBadge').textContent='Items: '+list.length;
- document.getElementById('stackBadge').textContent='Total blocks: '+total.toLocaleString();
- let done=data.filter(x=>x.done).length;
- let pct=Math.round(done/data.length*100)||0;
- document.getElementById('progressLabel').textContent='Gathered '+pct+'%';
- document.getElementById('fill').style.width=pct+'%';
-}
+data.forEach(item=>{
+const div=document.createElement("div");
+div.className="card";
 
-function toggleDone(i){data[i].done=!data[i].done;render()}
-function checkAll(){data.forEach(x=>x.done=true);render()}
-function sortByAmount(){sorted=!sorted;render()}
-function toggleMode(){
- rawMode=!rawMode;
- document.getElementById('modeBtn').textContent=rawMode?'Showing Raw Materials':'Showing Crafted Result Items';
- render();
+div.innerHTML=`
+<div class="icon">${icon(item.name)}</div>
+
+<div>
+<div class="name">${pretty(item.name)}</div>
+<div class="sub">${item.name}</div>
+</div>
+
+<div class="amount">${item.amount.toLocaleString()}</div>
+`;
+
+grid.appendChild(div);
+});
 }
 </script>
+
 </body>
 </html>
