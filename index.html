@@ -3,32 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Minecraft Material Dashboard</title>
+<title>Minecraft Material Viewer REAL TEXTURES</title>
 
 <style>
 body{
 margin:0;
 font-family:Arial;
-background:#0a0f1e;
+background:#0b1020;
 color:#e5e7eb;
 }
 
-.container{
-max-width:1100px;
-margin:auto;
-padding:20px;
-}
+.wrap{max-width:1200px;margin:auto;padding:20px}
 
-.header{
+.hero{
+background:linear-gradient(135deg,#1e3a8a,#065f46);
 padding:25px;
 border-radius:16px;
-background:linear-gradient(135deg,#1e3a8a,#065f46);
-margin-bottom:20px;
 }
 
 .drop{
-border:2px dashed #60a5fa;
+margin-top:15px;
 padding:30px;
+border:2px dashed #60a5fa;
 border-radius:16px;
 text-align:center;
 cursor:pointer;
@@ -37,33 +33,31 @@ background:#111827;
 
 .grid{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
 gap:12px;
 margin-top:20px;
 }
 
 .card{
 background:#0f172a;
-padding:15px;
+border:1px solid #1f2937;
+padding:12px;
 border-radius:14px;
 display:flex;
 align-items:center;
 gap:12px;
-border:1px solid #1f2937;
 }
 
-.icon{
+.icon img{
 width:42px;
 height:42px;
-font-size:28px;
-display:flex;
-align-items:center;
-justify-content:center;
-background:#111827;
-border-radius:10px;
+image-rendering: pixelated;
+background:#0b1224;
+border-radius:8px;
+padding:3px;
 }
 
-.name{font-weight:bold;font-size:16px}
+.name{font-weight:bold}
 .sub{font-size:11px;color:#94a3b8}
 .amount{margin-left:auto;font-size:18px;font-weight:bold}
 
@@ -73,10 +67,10 @@ border-radius:10px;
 
 <body>
 
-<div class="container">
+<div class="wrap">
 
-<div class="header">
-<h1>⛏ Minecraft Material Dashboard</h1>
+<div class="hero">
+<h1>⛏ Minecraft Material Viewer (REAL TEXTURES FIXED)</h1>
 
 <div class="drop" id="drop">
 <input type="file" id="file" hidden>
@@ -122,41 +116,38 @@ render();
 r.readAsText(f);
 }
 
+/* ---------------- CLEAN ---------------- */
 function clean(id){
 return id.replace("minecraft:","").toLowerCase();
 }
 
-/* 🔥 ICON SYSTEM THAT NEVER BREAKS */
-function icon(id){
-
-const icons = {
-stone:"🪨",
-dirt:"🟫",
-oak_log:"🪵",
-oak_wood:"🪵",
-cobblestone:"🪨",
-diamond:"💎",
-iron_ingot:"⚙️",
-gold_ingot:"🟡",
-redstone:"🔴",
-coal:"⚫",
-emerald:"🟢",
-grass_block:"🌱",
-sand:"🏖️",
-glass:"🪟",
-water_bucket:"🪣",
-lava_bucket:"🔥"
-};
-
-return icons[id] || "📦";
-}
-
+/* ---------------- PRETTY ---------------- */
 function pretty(n){
 return n.split("_")
 .map(w=>w.charAt(0).toUpperCase()+w.slice(1))
 .join(" ");
 }
 
+/* ---------------- REAL TEXTURE SYSTEM ---------------- */
+function icon(id){
+
+const base = "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/master/assets/minecraft/textures";
+
+const itemURL = `${base}/item/${id}.png`;
+const blockURL = `${base}/block/${id}.png`;
+
+return `
+<img src="${itemURL}"
+onerror="
+this.onerror=null;
+this.src='${blockURL}';
+this.onerror=function(){
+this.src='https://mc-heads.net/item/stone';
+}">
+`;
+}
+
+/* ---------------- RENDER ---------------- */
 function render(){
 const grid=document.getElementById("grid");
 grid.innerHTML="";
