@@ -493,6 +493,12 @@
             box-shadow: 0 0 8px var(--success-glow);
         }
 
+        .tag-amount {
+            background: rgba(167, 139, 250, 0.15);
+            color: #c4b5fd;
+            border: 1px solid rgba(167, 139, 250, 0.3);
+        }
+
         .item-actions {
             display: flex;
             align-items: center;
@@ -2288,15 +2294,19 @@
                         </div>
                     </div>
                     <div class="form-group">
+                        <label>Amount Available</label>
+                        <input type="number" id="itemAmount" placeholder="How many you have in stock (e.g. 12)" min="0">
+                    </div>
+                    <div class="form-group">
                         <label>Description</label>
                         <textarea id="itemDesc" rows="2" placeholder="Item description..."></textarea>
                     </div>
                     <div class="form-group">
                         <label>Stock Status *</label>
                         <select id="itemStock">
-                            <option value="selling">Selling (in stock now)</option>
-                            <option value="available">Order's Available (you can order)</option>
-                            <option value="not_selling">Not Selling Right Now (cannot purchase yet)</option>
+                            <option value="selling">Selling</option>
+                            <option value="available">Order's Available</option>
+                            <option value="not_selling">Not Selling Right Now</option>
                         </select>
                     </div>
                     <button class="checkout-btn" onclick="saveItem()" id="saveBtn">Add Item</button>
@@ -2312,6 +2322,7 @@
                                 <th>Category</th>
                                 <th>Price</th>
                                 <th>Qty</th>
+                                <th>Amount</th>
                                 <th>Stock</th>
                                 <th>Actions</th>
                             </tr>
@@ -2648,12 +2659,17 @@
                 const div = document.createElement('div');
                 div.className = 'item-row';
                 div.style.animationDelay = `${index * 0.03}s`;
+                const amt = (typeof item.amount === 'number' && item.amount >= 0) ? item.amount : null;
+                const amountTag = amt === null
+                    ? ''
+                    : `<span class="tag tag-amount">${amt} available</span>`;
                 div.innerHTML = `
                     <div class="item-info">
                         <div class="item-name">${item.name}</div>
                         <div class="item-tags">
                             <span class="tag tag-item">item</span>
                             <span class="tag tag-category">${item.category}</span>
+                            ${amountTag}
                         </div>
                     </div>
                     <div class="item-actions">
@@ -3172,6 +3188,7 @@
                         ${item.price} ${getCurrencyLabel(item.currency || 'diamonds')}
                     </td>
                     <td>${item.quantity}</td>
+                    <td>${(typeof item.amount === 'number' && item.amount >= 0) ? item.amount : '<span style="color: var(--text-secondary);">—</span>'}</td>
                     <td><span class="stock-badge ${statusClass(getItemStatus(item))}">${statusLabel(getItemStatus(item))}</span></td>
                     <td>
                         <button class="btn btn--ghost btn--sm" onclick="editItem(${item.id})" title="Edit item">
@@ -3196,6 +3213,8 @@
             const description = document.getElementById('itemDesc').value.trim();
             const statusVal = document.getElementById('itemStock').value;
             const status = (statusVal === 'selling' || statusVal === 'available' || statusVal === 'not_selling') ? statusVal : 'selling';
+            const amountRaw = document.getElementById('itemAmount').value;
+            const amount = (amountRaw === '' || isNaN(parseInt(amountRaw))) ? null : Math.max(0, parseInt(amountRaw));
 
             if (!name || !price || !quantity) {
                 showToast('Please fill in Name, Price and Quantity');
@@ -3210,7 +3229,7 @@
             if (editingItem) {
                 itemId = editingItem;
                 const existing = items.find(i => i.id === editingItem) || {};
-                payload = { ...existing, id: editingItem, name, category, currency, price, quantity, description, status };
+                payload = { ...existing, id: editingItem, name, category, currency, price, quantity, description, status, amount };
                 delete payload.inStock;
                 editingItem = null;
                 document.getElementById('formTitle').textContent = 'Add New Item';
@@ -3218,7 +3237,7 @@
                 document.getElementById('cancelBtn').style.display = 'none';
             } else {
                 itemId = Date.now();
-                payload = { id: itemId, name, category, currency, price, quantity, description, status };
+                payload = { id: itemId, name, category, currency, price, quantity, description, status, amount };
             }
 
             setDoc(doc(db, 'items', String(itemId)), payload)
@@ -3239,6 +3258,7 @@
             document.getElementById('itemQty').value = item.quantity;
             document.getElementById('itemDesc').value = item.description;
             document.getElementById('itemStock').value = getItemStatus(item);
+            document.getElementById('itemAmount').value = (item.amount === null || item.amount === undefined) ? '' : item.amount;
             
             const currency = item.currency || 'diamonds';
             selectCurrency(currency);
@@ -3269,6 +3289,7 @@
             document.getElementById('itemName').value = '';
             document.getElementById('itemPrice').value = '';
             document.getElementById('itemQty').value = '';
+            document.getElementById('itemAmount').value = '';
             document.getElementById('itemDesc').value = '';
             document.getElementById('itemStock').value = 'selling';
             selectCurrency('diamonds');
