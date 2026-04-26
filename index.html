@@ -687,6 +687,62 @@
             box-shadow: 0 0 15px rgba(74, 158, 255, 0.1);
         }
 
+        .discount-row {
+            margin-top: 1.25rem;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .discount-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        .discount-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: stretch;
+        }
+        .discount-controls input {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        .discount-controls input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.25);
+        }
+        .discount-status {
+            font-size: 0.85rem;
+            min-height: 1.1em;
+            color: var(--text-secondary);
+        }
+        .discount-status.discount-status--ok { color: var(--success); }
+        .discount-status.discount-status--err { color: var(--danger); }
+        .cart-discount-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--success);
+            margin-top: 0.5rem;
+        }
+        .cart-discount-line button {
+            background: none; border: none; color: var(--text-secondary);
+            cursor: pointer; font-size: 0.8rem; padding: 0; margin-left: 0.5rem;
+            text-decoration: underline;
+        }
+
         .cart-total {
             font-size: 1.25rem;
             font-weight: 700;
@@ -2029,6 +2085,16 @@
             <button class="cart-close" onclick="toggleCart()">×</button>
             <h2 style="margin-bottom: 1.5rem; font-size: 1.25rem;">Your Cart</h2>
             <div id="cartItems"></div>
+
+            <div class="discount-row" id="discountRow">
+                <label class="discount-label" for="discountInput">Discount code</label>
+                <div class="discount-controls">
+                    <input type="text" id="discountInput" placeholder="Enter code" autocomplete="off" maxlength="32">
+                    <button class="btn btn--primary btn--sm" type="button" onclick="applyDiscountCode()">Apply</button>
+                </div>
+                <div class="discount-status" id="discountStatus"></div>
+            </div>
+
             <div class="cart-total" id="cartTotal">Total: 0</div>
             <button class="checkout-btn" onclick="proceedCheckout()">Proceed to Checkout</button>
         </div>
@@ -2219,6 +2285,7 @@
             <button class="panel-tab active" onclick="switchPanel('orders')">Orders</button>
             <button class="panel-tab" onclick="switchPanel('items')">Manage Items</button>
             <button class="panel-tab" onclick="switchPanel('announce')">Announcements</button>
+            <button class="panel-tab" onclick="switchPanel('discounts')">Discounts</button>
             <button class="panel-tab" onclick="switchPanel('tickets')">Tickets <span id="ownerTicketBadge" class="owner-ticket-badge" style="display:none;">0</span></button>
         </div>
 
@@ -2394,6 +2461,42 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Discounts Section -->
+            <div class="panel-section" id="panel-discounts">
+                <div class="admin-form">
+                    <h3>Create Discount Code</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">
+                        Codes are case-insensitive and synced across every device. Customers enter the code in the cart to take a percentage off their total.
+                    </p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Code *</label>
+                            <input type="text" id="discountCodeInput" placeholder="SUMMER20" maxlength="32">
+                        </div>
+                        <div class="form-group">
+                            <label>Percent off * (1–100)</label>
+                            <input type="number" id="discountPercentInput" placeholder="20" min="1" max="100">
+                        </div>
+                    </div>
+                    <button class="checkout-btn" onclick="saveDiscount()">Add Discount Code</button>
+                </div>
+
+                <h3 style="margin: 2rem 0 1rem; font-size: 1.125rem;">Active Codes</h3>
+                <div style="overflow-x: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Percent off</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminDiscountsList"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -2501,6 +2604,9 @@
         let __users = [];
         let __announcement = '';
         let __maintenance = false;
+        let __discounts = [];
+        // appliedDiscount: { code: 'SAVE10', percent: 10 } | null
+        let appliedDiscount = null;
         let currentCategory = 'all';
         let editingItem = null;
         let lastOrderCount = 0;
@@ -2570,6 +2676,30 @@
                 __users = snap.docs.map(d => d.data());
             });
 
+            // DISCOUNT CODES
+            onSnapshot(collection(db, 'discountCodes'), snap => {
+                __discounts = snap.docs.map(d => d.data())
+                    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                // If the currently applied code was deleted or its percent changed,
+                // resync (or drop) the local appliedDiscount so the cart reflects reality.
+                if (appliedDiscount) {
+                    const match = __discounts.find(d => (d.code || '').toUpperCase() === appliedDiscount.code);
+                    if (!match) {
+                        appliedDiscount = null;
+                        try { sessionStorage.removeItem('shopAppliedDiscount'); } catch(e) {}
+                    } else if (match.percent !== appliedDiscount.percent) {
+                        appliedDiscount = { code: match.code.toUpperCase(), percent: match.percent };
+                        try { sessionStorage.setItem('shopAppliedDiscount', JSON.stringify(appliedDiscount)); } catch(e) {}
+                    }
+                }
+                if (document.getElementById('cartOverlay') && document.getElementById('cartOverlay').classList.contains('active')) {
+                    try { renderCart(); } catch(e) {}
+                }
+                if (document.getElementById('ownerPanel') && document.getElementById('ownerPanel').classList.contains('active')) {
+                    try { renderAdminDiscounts(); } catch(e) {}
+                }
+            });
+
             // TICKETS
             onSnapshot(collection(db, 'tickets'), snap => {
                 __tickets = snap.docs.map(d => d.data()).sort((a, b) => (b.id || 0) - (a.id || 0));
@@ -2611,6 +2741,7 @@
             __bootDone = true;
             // cart stays in localStorage (per-device)
             cart = JSON.parse(localStorage.getItem('shopCart') || '[]');
+            restoreAppliedDiscount();
             setupFirestoreListeners();
             renderItems();
             updateCartCount();
@@ -2775,11 +2906,14 @@
 
         function renderCart() {
             const container = document.getElementById('cartItems');
+            const discountRow = document.getElementById('discountRow');
             if (cart.length === 0) {
                 container.innerHTML = '<div class="empty-state">Your cart is empty</div>';
                 document.getElementById('cartTotal').textContent = 'Total: 0';
+                if (discountRow) discountRow.style.display = 'none';
                 return;
             }
+            if (discountRow) discountRow.style.display = '';
 
             container.innerHTML = cart.map(item => `
                 <div class="cart-item">
@@ -2803,14 +2937,61 @@
                 </div>
             `).join('');
 
-            const diamondTotal = cart.filter(i => (i.currency || 'diamonds') === 'diamonds').reduce((sum, item) => sum + (item.price * item.cartQty), 0);
-            const netheriteTotal = cart.filter(i => i.currency === 'netherite').reduce((sum, item) => sum + (item.price * item.cartQty), 0);
-            
-            let totalText = '';
-            if (diamondTotal > 0) totalText += `💎 ${diamondTotal} Diamonds `;
-            if (netheriteTotal > 0) totalText += `⚫ ${netheriteTotal} Netherite Ingots`;
-            
-            document.getElementById('cartTotal').textContent = `Total: ${totalText || '0'}`;
+            const totals = cartTotalsWithDiscount();
+
+            // Sync the input box label / state with the currently applied code.
+            const input = document.getElementById('discountInput');
+            const status = document.getElementById('discountStatus');
+            if (appliedDiscount && status) {
+                if (input && document.activeElement !== input && (input.value || '').toUpperCase() !== appliedDiscount.code) {
+                    input.value = appliedDiscount.code;
+                }
+                status.className = 'discount-status discount-status--ok';
+                status.innerHTML = `Code <strong>${appliedDiscount.code}</strong> applied — ${appliedDiscount.percent}% off. <button type="button" onclick="removeDiscountCode()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;text-decoration:underline;font-size:0.8rem;padding:0;">Remove</button>`;
+            } else if (status) {
+                status.className = 'discount-status';
+                status.textContent = '';
+            }
+
+            let html = '';
+            if (totals.diamonds.subtotal > 0 || totals.netherite.subtotal > 0) {
+                if (appliedDiscount) {
+                    const subParts = [];
+                    if (totals.diamonds.subtotal > 0) subParts.push(`${totals.diamonds.subtotal} Diamonds`);
+                    if (totals.netherite.subtotal > 0) subParts.push(`${totals.netherite.subtotal} Netherite`);
+                    html += `<div style="display:flex;justify-content:space-between;color:var(--text-secondary);font-size:0.9rem;">
+                        <span>Subtotal</span><span>${subParts.join(' + ')}</span>
+                    </div>`;
+                    const saveParts = [];
+                    if (totals.diamonds.saved > 0) saveParts.push(`-${totals.diamonds.saved} Diamonds`);
+                    if (totals.netherite.saved > 0) saveParts.push(`-${totals.netherite.saved} Netherite`);
+                    html += `<div class="cart-discount-line">
+                        <span>${appliedDiscount.code} (${appliedDiscount.percent}% off)</span>
+                        <span>${saveParts.join(' + ') || '—'}</span>
+                    </div>`;
+                }
+                let totalText = '';
+                if (totals.diamonds.total > 0) totalText += `💎 ${totals.diamonds.total} Diamonds `;
+                if (totals.netherite.total > 0) totalText += `⚫ ${totals.netherite.total} Netherite Ingots`;
+                document.getElementById('cartTotal').innerHTML = `${html}<div style="margin-top:0.5rem;">Total: ${totalText || '0'}</div>`;
+            } else {
+                document.getElementById('cartTotal').textContent = 'Total: 0';
+            }
+        }
+
+        // Returns subtotal/saved/total per currency, applying appliedDiscount if any.
+        function cartTotalsWithDiscount() {
+            const dSub = cart.filter(i => (i.currency || 'diamonds') === 'diamonds')
+                .reduce((s, i) => s + (i.price * i.cartQty), 0);
+            const nSub = cart.filter(i => i.currency === 'netherite')
+                .reduce((s, i) => s + (i.price * i.cartQty), 0);
+            const pct = appliedDiscount ? appliedDiscount.percent : 0;
+            const dSaved = pct ? Math.floor((dSub * pct) / 100) : 0;
+            const nSaved = pct ? Math.floor((nSub * pct) / 100) : 0;
+            return {
+                diamonds: { subtotal: dSub, saved: dSaved, total: Math.max(0, dSub - dSaved) },
+                netherite: { subtotal: nSub, saved: nSaved, total: Math.max(0, nSub - nSaved) }
+            };
         }
 
         function updateCartQty(itemId, delta) {
@@ -2864,19 +3045,27 @@
                 return;
             }
 
+            // Compute totals (with discount, if any) so the owner sees the final amount.
+            const totals = cartTotalsWithDiscount();
+
             // Create order object
             const order = {
                 id: Date.now(),
                 date: new Date().toLocaleString(),
                 items: JSON.parse(JSON.stringify(cart)), // Deep copy
-                customer: { 
-                    mcUser: mcUser, 
-                    discord: discord, 
-                    coords: coords, 
-                    dimension: dimension, 
-                    other: other 
+                customer: {
+                    mcUser: mcUser,
+                    discord: discord,
+                    coords: coords,
+                    dimension: dimension,
+                    other: other
                 },
-                status: 'pending'
+                status: 'pending',
+                totals: {
+                    diamonds: totals.diamonds,   // { subtotal, saved, total }
+                    netherite: totals.netherite
+                },
+                discount: appliedDiscount ? { code: appliedDiscount.code, percent: appliedDiscount.percent } : null
             };
 
             // Persist to Firestore (broadcasts live to every device via onSnapshot)
@@ -2887,10 +3076,12 @@
                 showToast('Could not place order — check connection');
             });
 
-            // Clear cart
+            // Clear cart and applied discount
             cart = [];
             saveCart();
             updateCartCount();
+            appliedDiscount = null;
+            try { sessionStorage.removeItem('shopAppliedDiscount'); } catch(e) {}
             
             // Close checkout
             document.getElementById('checkoutForm').classList.remove('active');
@@ -3001,6 +3192,7 @@
             if (tab === 'announce') {
                 document.getElementById('announceText').value = __announcement || '';
             }
+            if (tab === 'discounts') renderAdminDiscounts();
         }
 
         // Orders Management
@@ -3044,6 +3236,43 @@
                 `;
             }).join('') || '<div class="order-item-row" style="opacity:0.7;"><span>No items recorded</span><span>—</span></div>';
 
+            // Discount + totals (back-compat: older orders won't have these fields)
+            let totalsBlock = '';
+            const t = order && order.totals;
+            const disc = order && order.discount;
+            if (t && (t.diamonds || t.netherite)) {
+                const d = t.diamonds || { subtotal: 0, saved: 0, total: 0 };
+                const n = t.netherite || { subtotal: 0, saved: 0, total: 0 };
+                const subParts = [];
+                if (d.subtotal > 0) subParts.push(`${d.subtotal} Diamonds`);
+                if (n.subtotal > 0) subParts.push(`${n.subtotal} Netherite`);
+                const totalParts = [];
+                if (d.total > 0) totalParts.push(`${d.total} Diamonds`);
+                if (n.total > 0) totalParts.push(`${n.total} Netherite`);
+                let discLine = '';
+                if (disc && disc.code) {
+                    const saveParts = [];
+                    if (d.saved > 0) saveParts.push(`-${d.saved} Diamonds`);
+                    if (n.saved > 0) saveParts.push(`-${n.saved} Netherite`);
+                    discLine = `
+                        <div class="order-item-row" style="color: var(--success);">
+                            <span><strong>Discount</strong> ${escapeHtml(disc.code)} (${disc.percent}% off)</span>
+                            <span>${saveParts.join(' + ') || '—'}</span>
+                        </div>`;
+                }
+                totalsBlock = `
+                    <div class="order-item-row" style="opacity:0.85;">
+                        <span><strong>Subtotal</strong></span>
+                        <span>${subParts.join(' + ') || '—'}</span>
+                    </div>
+                    ${discLine}
+                    <div class="order-item-row" style="font-weight:700;">
+                        <span><strong>Total Charged</strong></span>
+                        <span>${totalParts.join(' + ') || '0'}</span>
+                    </div>
+                `;
+            }
+
             const ICON_REOPEN = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>';
             const ICON_CHECK  = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
             const completeBtn = status === 'completed'
@@ -3068,6 +3297,7 @@
                     <div class="order-items-list">
                         <strong>Items Ordered</strong>
                         ${itemRows}
+                        ${totalsBlock}
                     </div>
                     <div class="order-actions">
                         ${completeBtn}
@@ -3307,6 +3537,119 @@
             document.getElementById('itemCurrency').value = 'diamonds';
         }
 
+        // ===== Discount Codes (Firestore collection: discountCodes) =====
+        // Doc shape: { code: 'SAVE10' (uppercase, used as doc id), percent: 10, createdAt: ms }
+        function findDiscount(code) {
+            if (!code) return null;
+            const c = String(code).toUpperCase().trim();
+            return __discounts.find(d => (d.code || '').toUpperCase() === c) || null;
+        }
+
+        function saveDiscount() {
+            const codeInput = document.getElementById('discountCodeInput');
+            const pctInput = document.getElementById('discountPercentInput');
+            const code = (codeInput.value || '').trim().toUpperCase().replace(/\s+/g, '');
+            const percent = parseInt(pctInput.value);
+            if (!code) { showToast('Enter a code'); return; }
+            if (!/^[A-Z0-9_-]{1,32}$/.test(code)) {
+                showToast('Code can only contain letters, numbers, _ and -');
+                return;
+            }
+            if (isNaN(percent) || percent < 1 || percent > 100) {
+                showToast('Percent must be between 1 and 100');
+                return;
+            }
+            if (!fsbReady()) { showToast('Not connected — try again in a moment'); return; }
+            const { db, doc, setDoc } = window.FSB;
+            setDoc(doc(db, 'discountCodes', code), { code, percent, createdAt: Date.now() })
+                .then(() => {
+                    showToast('Code saved');
+                    codeInput.value = '';
+                    pctInput.value = '';
+                })
+                .catch(err => { console.error(err); showToast('Save failed'); });
+        }
+
+        function deleteDiscount(code) {
+            if (!fsbReady()) return;
+            const { db, doc, deleteDoc } = window.FSB;
+            deleteDoc(doc(db, 'discountCodes', String(code).toUpperCase()))
+                .then(() => showToast('Code deleted'))
+                .catch(err => { console.error(err); showToast('Delete failed'); });
+        }
+
+        function renderAdminDiscounts() {
+            const tbody = document.getElementById('adminDiscountsList');
+            if (!tbody) return;
+            if (__discounts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-secondary); padding: 1.5rem;">No discount codes yet</td></tr>';
+                return;
+            }
+            tbody.innerHTML = __discounts.map(d => {
+                const created = d.createdAt ? new Date(d.createdAt).toLocaleString() : '—';
+                return `
+                    <tr>
+                        <td style="font-weight: 600; letter-spacing: 0.04em;">${d.code}</td>
+                        <td>${d.percent}% off</td>
+                        <td style="color: var(--text-secondary); font-size: 0.85rem;">${created}</td>
+                        <td>
+                            <button class="btn btn--danger btn--sm" onclick="deleteDiscount('${(d.code || '').replace(/'/g, "\\'")}')" title="Delete code">
+                                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                <span>Delete</span>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function applyDiscountCode() {
+            const input = document.getElementById('discountInput');
+            const status = document.getElementById('discountStatus');
+            const raw = (input.value || '').trim();
+            if (!raw) {
+                if (status) {
+                    status.className = 'discount-status discount-status--err';
+                    status.textContent = 'Enter a code';
+                }
+                return;
+            }
+            const match = findDiscount(raw);
+            if (!match) {
+                if (status) {
+                    status.className = 'discount-status discount-status--err';
+                    status.textContent = 'Invalid code';
+                }
+                appliedDiscount = null;
+                try { sessionStorage.removeItem('shopAppliedDiscount'); } catch(e) {}
+                renderCart();
+                return;
+            }
+            appliedDiscount = { code: (match.code || '').toUpperCase(), percent: match.percent };
+            try { sessionStorage.setItem('shopAppliedDiscount', JSON.stringify(appliedDiscount)); } catch(e) {}
+            renderCart();
+            showToast(`Code applied — ${match.percent}% off`);
+        }
+
+        function removeDiscountCode() {
+            appliedDiscount = null;
+            try { sessionStorage.removeItem('shopAppliedDiscount'); } catch(e) {}
+            const input = document.getElementById('discountInput');
+            if (input) input.value = '';
+            renderCart();
+        }
+
+        function restoreAppliedDiscount() {
+            try {
+                const raw = sessionStorage.getItem('shopAppliedDiscount');
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.code && typeof parsed.percent === 'number') {
+                    appliedDiscount = parsed;
+                }
+            } catch(e) {}
+        }
+
         // Announcements (Firestore doc: config/announcement { text })
         function renderAnnouncement() {
             const text = (__announcement || '').trim();
@@ -3430,7 +3773,8 @@
                     orders: orders,
                     announcement: __announcement,
                     users: __users,
-                    tickets: __tickets
+                    tickets: __tickets,
+                    discountCodes: __discounts
                 }
             };
             const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -3465,6 +3809,7 @@
                     const newOrders = parseMaybe(wrapper.orders || wrapper.shopOrders, []);
                     const newUsers = parseMaybe(wrapper.users || wrapper.shopUsers, []);
                     const newTickets = parseMaybe(wrapper.tickets || wrapper.shopTickets, []);
+                    const newDiscounts = parseMaybe(wrapper.discountCodes || wrapper.shopDiscountCodes, []);
                     const newAnnouncement = (wrapper.announcement != null)
                         ? wrapper.announcement
                         : (wrapper.shopAnnouncement != null ? wrapper.shopAnnouncement : '');
@@ -3482,6 +3827,9 @@
                     });
                     (Array.isArray(newTickets) ? newTickets : []).forEach(t => {
                         if (t && t.id != null) batch.set(doc(db, 'tickets', String(t.id)), t);
+                    });
+                    (Array.isArray(newDiscounts) ? newDiscounts : []).forEach(d => {
+                        if (d && d.code) batch.set(doc(db, 'discountCodes', String(d.code).toUpperCase()), d);
                     });
                     batch.set(doc(db, 'config', 'announcement'), { text: String(newAnnouncement || '') });
                     // Mark as seeded so the default-seed logic doesn't fire after a restore.
