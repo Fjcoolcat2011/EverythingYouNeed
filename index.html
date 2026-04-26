@@ -2181,6 +2181,336 @@
             text-decoration: underline;
             padding: 0;
         }
+
+        /* ===== Light theme overrides ===== */
+        :root[data-theme="light"] {
+            --bg-primary: #f5f7fb;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #1a1f2c;
+            --text-secondary: #5b6473;
+            --border-color: #d8dee6;
+            --accent-blue: #2563eb;
+            --accent-blue-glow: rgba(37, 99, 235, 0.25);
+            --accent-cyan: #0891b2;
+            --accent-cyan-glow: rgba(8, 145, 178, 0.25);
+            --success: #16a34a;
+            --success-glow: rgba(22, 163, 74, 0.2);
+            --danger: #dc2626;
+            --danger-glow: rgba(220, 38, 38, 0.2);
+            --warning: #b45309;
+            --warning-glow: rgba(180, 83, 9, 0.2);
+            --purple: #7c3aed;
+            --purple-glow: rgba(124, 58, 237, 0.2);
+        }
+        :root[data-theme="light"] body { color: var(--text-primary); }
+        :root[data-theme="light"] body::before {
+            background:
+                radial-gradient(circle at 20% 50%, rgba(37, 99, 235, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(8, 145, 178, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(124, 58, 237, 0.03) 0%, transparent 50%);
+        }
+        :root[data-theme="light"] .header {
+            background: linear-gradient(180deg, #e8eef9 0%, var(--bg-primary) 100%);
+        }
+        :root[data-theme="light"] .item-row,
+        :root[data-theme="light"] .order-card,
+        :root[data-theme="light"] .admin-form,
+        :root[data-theme="light"] .cart-content,
+        :root[data-theme="light"] .owner-panel,
+        :root[data-theme="light"] .checkout-form,
+        :root[data-theme="light"] .stock-legend,
+        :root[data-theme="light"] .modal-content,
+        :root[data-theme="light"] .order-status-overlay,
+        :root[data-theme="light"] .nav-bar {
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+        }
+        :root[data-theme="light"] input,
+        :root[data-theme="light"] select,
+        :root[data-theme="light"] textarea {
+            background: #ffffff;
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        /* ===== Featured / Restock / Bundle tags ===== */
+        .tag-featured {
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #1a1a1a;
+            font-weight: 700;
+            box-shadow: 0 0 8px rgba(255, 165, 0, 0.4);
+        }
+        .tag-restock {
+            background: linear-gradient(135deg, var(--warning), #b87a16);
+            color: #fff;
+        }
+        .tag-bundle {
+            background: linear-gradient(135deg, var(--purple), #7e3ff2);
+            color: #fff;
+            font-weight: 600;
+        }
+        .bundle-includes {
+            margin-top: 0.5rem;
+            padding: 0.55rem 0.75rem;
+            background: rgba(163, 113, 247, 0.08);
+            border: 1px solid rgba(163, 113, 247, 0.25);
+            border-left: 3px solid var(--purple);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .bundle-includes strong { color: var(--text-primary); }
+        .bundle-includes ul { margin: 0.3rem 0 0 1.1rem; padding: 0; }
+        .bundle-includes li { line-height: 1.45; }
+        .item-row.is-featured {
+            border: 1px solid rgba(255, 165, 0, 0.55);
+            box-shadow: 0 0 18px rgba(255, 165, 0, 0.18);
+        }
+
+        /* ===== Live presence pill ===== */
+        .presence-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.85rem;
+            background: rgba(63, 185, 80, 0.12);
+            border: 1px solid rgba(63, 185, 80, 0.35);
+            border-radius: 999px;
+            color: var(--success);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .presence-pill .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success-glow);
+            animation: presencePulse 1.6s ease-in-out infinite;
+        }
+        @keyframes presencePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.55; transform: scale(0.85); }
+        }
+
+        /* ===== Theme toggle button ===== */
+        .theme-toggle .icon-sun { display: none; }
+        .theme-toggle .icon-moon { display: inline-block; }
+        :root[data-theme="light"] .theme-toggle .icon-sun { display: inline-block; }
+        :root[data-theme="light"] .theme-toggle .icon-moon { display: none; }
+
+        /* ===== Maintenance countdown ===== */
+        .maintenance-countdown {
+            margin-top: 1.25rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.25rem;
+            background: rgba(74, 158, 255, 0.08);
+            border: 1px solid rgba(74, 158, 255, 0.3);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        .maintenance-countdown .label { color: var(--text-secondary); }
+        .maintenance-countdown .time {
+            font-weight: 700;
+            color: var(--accent-cyan);
+            font-variant-numeric: tabular-nums;
+            font-size: 1.05rem;
+        }
+
+        /* ===== Owner-only notes on order cards ===== */
+        .owner-notes-block {
+            margin-top: 0.75rem;
+            background: rgba(255, 215, 0, 0.05);
+            border: 1px dashed rgba(255, 215, 0, 0.35);
+            border-radius: 8px;
+            padding: 0.6rem 0.75rem;
+        }
+        .owner-notes-block label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #d4a017;
+            margin-bottom: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .owner-notes-block textarea {
+            width: 100%;
+            min-height: 50px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.5rem 0.6rem;
+            font-family: inherit;
+            font-size: 0.85rem;
+            resize: vertical;
+        }
+        .owner-notes-block .hint {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-top: 0.3rem;
+        }
+
+        /* ===== Sales dashboard ===== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .dashboard-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem 1.1rem;
+        }
+        .dashboard-card .label {
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 600;
+        }
+        .dashboard-card .value {
+            color: var(--text-primary);
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-top: 0.35rem;
+            font-variant-numeric: tabular-nums;
+        }
+        .dashboard-card .sub {
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            margin-top: 0.2rem;
+        }
+        .dashboard-card.accent-blue { border-left: 3px solid var(--accent-blue); }
+        .dashboard-card.accent-success { border-left: 3px solid var(--success); }
+        .dashboard-card.accent-warning { border-left: 3px solid var(--warning); }
+        .dashboard-card.accent-purple { border-left: 3px solid var(--purple); }
+        .dashboard-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem 1.1rem;
+            margin-bottom: 1rem;
+        }
+        .dashboard-section h3 {
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+        }
+        .dashboard-section .top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+        .dashboard-section .top-row:last-child { border-bottom: none; }
+        .dashboard-section .top-row .name { font-weight: 500; }
+        .dashboard-section .top-row .qty {
+            color: var(--text-secondary);
+            font-variant-numeric: tabular-nums;
+        }
+        /* ===== IP bans + warns admin styling ===== */
+        .ip-badge {
+            display: inline-block;
+            padding: 0.15rem 0.55rem;
+            background: rgba(74,158,255,0.12);
+            border: 1px solid rgba(74,158,255,0.35);
+            color: var(--accent-blue);
+            border-radius: 6px;
+            font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 0.78rem;
+            letter-spacing: 0.02em;
+        }
+        .ban-pill {
+            display: inline-block;
+            padding: 0.18rem 0.6rem;
+            border-radius: 99px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .ban-pill-ban {
+            background: rgba(239,68,68,0.16);
+            color: var(--danger);
+            border: 1px solid rgba(239,68,68,0.35);
+        }
+        .ban-pill-warn {
+            background: rgba(245,158,11,0.16);
+            color: var(--warning, #f59e0b);
+            border: 1px solid rgba(245,158,11,0.35);
+        }
+        .order-ip-line { grid-column: 1 / -1; }
+        .order-ip-line .hint { font-weight: 400; opacity: 0.7; font-size: 0.72rem; margin-left: 0.25rem; }
+
+        /* ===== Customer reviews ===== */
+        .item-rating {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin: 0.25rem 0 0.25rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .item-rating .stars { color: #f5b301; letter-spacing: 0.05em; }
+        .item-rating .avg { color: var(--text-primary); font-weight: 600; }
+        .item-rating .count { opacity: 0.75; }
+        .item-reviews {
+            margin-top: 0.6rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .item-reviews summary {
+            cursor: pointer;
+            user-select: none;
+            color: var(--accent-blue);
+        }
+        .item-reviews .review-line {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .item-reviews .review-line .stars { color: #f5b301; margin-right: 0.4rem; }
+        .item-reviews .review-line .who { font-weight: 600; color: var(--text-primary); }
+        .item-reviews .review-line .text { margin-top: 0.2rem; color: var(--text-secondary); }
+
+        .review-card {
+            background: var(--surface, rgba(255,255,255,0.03));
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .review-card.is-hidden { opacity: 0.6; border-style: dashed; }
+        .review-card .review-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.4rem;
+        }
+        .review-card .review-stars { color: #f5b301; letter-spacing: 0.05em; font-size: 1rem; }
+        .review-card .review-meta { font-size: 0.78rem; color: var(--text-secondary); }
+        .review-card .review-text { color: var(--text-primary); margin-bottom: 0.5rem; line-height: 1.45; }
+        .review-card .review-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+        /* ===== My-order action row (Reorder + Print + Review) ===== */
+        .my-order-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px dashed rgba(255,255,255,0.08);
+        }
     </style>
 </head>
 <body>
@@ -2195,6 +2525,10 @@
             </div>
             <h1 id="maintenanceTitle">Update Mode</h1>
             <p>The shop is temporarily closed for updates. Check back in a bit — orders, tickets, and accounts will be right here waiting for you.</p>
+            <div class="maintenance-countdown" id="maintenanceCountdown" style="display:none;">
+                <span class="label">Estimated back online in</span>
+                <span class="time" id="maintenanceCountdownTime">—</span>
+            </div>
         </div>
         <div class="maintenance-unlock">
             <label for="maintenanceUnlockInput">Staff only</label>
@@ -2258,6 +2592,10 @@
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                     <span>Owner</span>
                 </button>
+                <button class="btn btn--ghost theme-toggle" onclick="toggleTheme()" title="Toggle light / dark theme" aria-label="Toggle theme">
+                    <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                </button>
             </div>
         </div>
 
@@ -2299,7 +2637,13 @@
 
     <!-- Main Container -->
     <div class="container">
-        <h2 class="section-title">Available Items</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <h2 class="section-title" style="margin-bottom: 0;">Available Items</h2>
+            <span class="presence-pill" id="presencePill" style="display:none;" title="Visitors browsing the shop right now">
+                <span class="dot"></span>
+                <span><span id="presenceCount">1</span> <span id="presenceLabel">person</span> shopping right now</span>
+            </span>
+        </div>
         
         <div class="search-container">
             <input type="text" class="search-input" id="searchInput" placeholder="Search items..." onkeyup="searchItems()">
@@ -2524,8 +2868,11 @@
         <div class="panel-nav">
             <button class="panel-tab active" onclick="switchPanel('orders')">Orders</button>
             <button class="panel-tab" onclick="switchPanel('items')">Manage Items</button>
+            <button class="panel-tab" onclick="switchPanel('dashboard')">Dashboard</button>
             <button class="panel-tab" onclick="switchPanel('announce')">Announcements</button>
             <button class="panel-tab" onclick="switchPanel('discounts')">Discounts</button>
+            <button class="panel-tab" onclick="switchPanel('reviews')">Reviews</button>
+            <button class="panel-tab" onclick="switchPanel('bans')">Bans</button>
             <button class="panel-tab" onclick="switchPanel('tickets')">Tickets <span id="ownerTicketBadge" class="owner-ticket-badge" style="display:none;">0</span></button>
         </div>
 
@@ -2622,6 +2969,26 @@
                             <option value="not_selling">Not Selling Right Now</option>
                         </select>
                     </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding-top: 0.5rem;">
+                                <input type="checkbox" id="itemFeatured" style="width:auto; margin:0;">
+                                <span>Featured (★ pin to top of shop)</span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>Restock ETA (optional)</label>
+                            <input type="date" id="itemRestockEta" title="Show a 'Restock soon' badge with this date">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bundle contents (optional — one item per line, e.g. "1x Elytra")</label>
+                        <textarea id="itemBundle" rows="3" placeholder="Leave blank for normal items.&#10;1x Elytra&#10;64x Fireworks&#10;1x Mending Book"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Low-stock alert threshold (optional)</label>
+                        <input type="number" id="itemLowStock" min="0" placeholder="e.g. 3 — you'll get a toast when amount drops at or below this">
+                    </div>
                     <button class="checkout-btn" onclick="saveItem()" id="saveBtn">Add Item</button>
                     <button class="checkout-btn" onclick="cancelEdit()" id="cancelBtn" style="display:none; background: var(--bg-secondary); color: var(--text-primary); margin-top: 0.5rem;">Cancel Edit</button>
                 </div>
@@ -2637,6 +3004,7 @@
                                 <th>Qty</th>
                                 <th>Amount</th>
                                 <th>Stock</th>
+                                <th>Featured</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -2706,6 +3074,17 @@
                         <button id="maintenanceToggleBtn" class="btn btn--primary" onclick="toggleMaintenance()">Loading…</button>
                         <span id="maintenanceStatus" style="color: var(--text-secondary); font-size: 0.875rem;"></span>
                     </div>
+                    <div style="margin-top: 1rem; display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;">
+                        <div class="form-group" style="flex: 1; min-width: 220px; margin-bottom: 0;">
+                            <label>Estimated back-online time (optional)</label>
+                            <input type="datetime-local" id="maintenanceEtaInput" title="Customers will see a live countdown to this time">
+                        </div>
+                        <button class="btn btn--primary btn--sm" onclick="saveMaintenanceEta()">Save ETA</button>
+                        <button class="btn btn--ghost btn--sm" onclick="clearMaintenanceEta()">Clear ETA</button>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.78rem; margin-top: 0.4rem;">
+                        If set, customers see a live "Back online in HH:MM:SS" countdown on the Update Mode page. Leave blank to hide it.
+                    </p>
                 </div>
 
                 <div class="admin-form" style="margin-top: 1.5rem;">
@@ -2768,6 +3147,79 @@
                         <tbody id="adminDiscountsList"></tbody>
                     </table>
                 </div>
+            </div>
+
+            <!-- Reviews Section -->
+            <div class="panel-section" id="panel-reviews">
+                <h2 style="margin-bottom: 0.5rem; font-size: 1.25rem;">Customer Reviews</h2>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                    Customers can leave a star rating + short comment after their order is marked Completed. Use the Hide button to remove anything inappropriate from public view.
+                </p>
+                <div id="adminReviewsList"></div>
+            </div>
+
+            <!-- Bans Section -->
+            <div class="panel-section" id="panel-bans">
+                <div class="admin-form">
+                    <h3>Ban or Warn an IP</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">
+                        <strong style="color:var(--danger)">Ban</strong> blocks the address from placing orders, signing up, or signing in. <strong style="color:var(--warning)">Warn</strong> still lets them order but shows a warning toast every visit. Heads-up: people on the same Wi-Fi share an IP, so banning one can affect their housemates / classmates.
+                    </p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>IP address *</label>
+                            <input type="text" id="banIpInput" placeholder="e.g. 73.142.18.50" maxlength="64">
+                        </div>
+                        <div class="form-group">
+                            <label>Action *</label>
+                            <select id="banActionInput">
+                                <option value="ban">Ban (block from ordering / signin)</option>
+                                <option value="warn">Warn (show warning toast)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Reason (optional, only shown to you)</label>
+                        <input type="text" id="banReasonInput" placeholder="scammed customer / chargeback / spam">
+                    </div>
+                    <button class="checkout-btn" onclick="saveBan()">Add to list</button>
+                </div>
+                <h3 style="margin: 2rem 0 1rem; font-size: 1.125rem;">Active list</h3>
+                <div style="overflow-x: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>IP</th>
+                                <th>Action</th>
+                                <th>Reason</th>
+                                <th>Added</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminBansList"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div class="panel-section" id="panel-dashboard">
+                <h2 style="margin-bottom: 1rem; font-size: 1.25rem;">Sales Dashboard</h2>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                    Live numbers from completed orders. Updates instantly when you mark orders complete.
+                </p>
+                <div class="dashboard-grid" id="dashboardGrid"></div>
+                <div class="dashboard-section">
+                    <h3>Top selling items</h3>
+                    <div id="dashboardTopItems"></div>
+                </div>
+                <div class="dashboard-section">
+                    <h3>Recent activity</h3>
+                    <div id="dashboardRecent"></div>
+                </div>
+                <button class="btn btn--ghost btn--sm" onclick="renderDashboard()">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                    <span>Refresh</span>
+                </button>
             </div>
         </div>
     </div>
@@ -2925,6 +3377,15 @@
         let editingItem = null;
         let lastOrderCount = 0;
         let __firstOrdersSnapshot = true;
+        let __maintenanceEta = 0;        // ms timestamp; 0 = no ETA set
+        let __presenceCount = 1;
+        let __presenceTimer = null;
+        let __countdownTimer = null;
+        let __ownerNotesTimer = {};      // per-orderId debounce for blur saves
+        let __bans = [];                 // [{ ip, action: 'ban'|'warn', reason, createdAt }]
+        let __reviews = [];              // [{ id, itemId, itemName, account, rating, text, createdAt, hidden }]
+        let __lowStockSeen = {};         // per-item: last amount we toasted at, so we don't spam
+        let __warnToastShownThisSession = false;
 
         // loadData() is now a no-op — live state is kept fresh by onSnapshot listeners.
         // Kept as a shim so existing call sites still work.
@@ -2937,6 +3398,7 @@
 
             // ITEMS
             onSnapshot(collection(db, 'items'), snap => {
+                const prev = items.slice();
                 items = snap.docs.map(d => d.data()).sort((a, b) => (a.id || 0) - (b.id || 0));
                 // Try to seed defaults on any empty snapshot; seedDefaultsIfNeeded()
                 // is idempotent (guarded by meta/seeded doc) so this is safe.
@@ -2945,6 +3407,9 @@
                 if (document.getElementById('ownerPanel') && document.getElementById('ownerPanel').classList.contains('active')) {
                     try { renderAdminItems(); } catch(e) {}
                 }
+                // Stock-low alerts — owner only, only fires when an item's amount
+                // crosses below its threshold (transition, not every snapshot).
+                try { checkLowStockTransitions(prev, items); } catch(e) {}
             });
 
             // ORDERS
@@ -2968,7 +3433,13 @@
                 lastOrderCount = orders.length;
                 __firstOrdersSnapshot = false;
                 if (document.getElementById('ownerPanel') && document.getElementById('ownerPanel').classList.contains('active')) {
-                    try { renderOrders(); } catch(e) {}
+                    // Don't blow away the owner's textarea while they're typing notes.
+                    const ae = document.activeElement;
+                    const typingNotes = ae && ae.tagName === 'TEXTAREA' && String(ae.id || '').startsWith('ownerNotes-');
+                    if (!typingNotes) { try { renderOrders(); } catch(e) {} }
+                    // Dashboard reflects orders too — refresh if its tab is visible.
+                    const dash = document.getElementById('panel-dashboard');
+                    if (dash && dash.classList.contains('active')) { try { renderDashboard(); } catch(e) {} }
                 }
                 // Customer's "My Orders" view updates live when the owner moves a stage.
                 const acctOverlay = document.getElementById('accountOverlay');
@@ -2999,6 +3470,12 @@
                 // updatedAt is written every toggle; acts as an epoch so
                 // existing unlocks are invalidated on any toggle.
                 __maintenanceUpdatedAt = data.updatedAt || '';
+                __maintenanceEta = Number(data.eta) || 0;
+                // Sync the admin ETA input field if it's not currently focused.
+                const etaIn = document.getElementById('maintenanceEtaInput');
+                if (etaIn && document.activeElement !== etaIn) {
+                    etaIn.value = __maintenanceEta ? toLocalDatetimeInput(__maintenanceEta) : '';
+                }
                 applyMaintenanceUI();
             });
 
@@ -3030,6 +3507,38 @@
                 if (document.getElementById('ownerPanel') && document.getElementById('ownerPanel').classList.contains('active')) {
                     try { renderAdminDiscounts(); } catch(e) {}
                 }
+            });
+
+            // BANS — IP-keyed list (doc id = ip). Keeps a local map so we can
+            // block placeOrder/signin/signup synchronously without a round-trip.
+            onSnapshot(collection(db, 'bans'), snap => {
+                __bans = snap.docs.map(d => d.data() || {})
+                    .filter(b => b && b.ip)
+                    .sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
+                try { renderAdminBans(); } catch(e) {}
+                // If THIS visitor just got warned, show them a single toast per session.
+                try { maybeShowWarnToast(); } catch(e) {}
+            });
+
+            // REVIEWS — public, customers can post if they have a Completed order
+            // for that item. Owner can hide or delete. Doc id = auto millisecond + rand.
+            onSnapshot(collection(db, 'reviews'), snap => {
+                __reviews = snap.docs.map(d => d.data() || {})
+                    .filter(r => r && r.itemId)
+                    .sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
+                try { renderItems(); } catch(e) {}
+                try { renderAdminReviews(); } catch(e) {}
+            });
+
+            // PRESENCE — count of active visitors right now
+            onSnapshot(collection(db, 'presence'), snap => {
+                const cutoff = Date.now() - 60 * 1000; // active = heartbeat in last 60s
+                const active = snap.docs.filter(d => {
+                    const v = d.data() || {};
+                    return Number(v.lastSeen) > cutoff;
+                }).length;
+                __presenceCount = Math.max(1, active);
+                renderPresencePill();
             });
 
             // TICKETS
@@ -3100,6 +3609,13 @@
         // Safety: if the module script already fired before listener attached
         if (window.FSB && document.readyState !== 'loading') boot();
 
+        // Theme can be applied even before Firestore is ready — it's per-device.
+        try { initTheme(); } catch(e) {}
+        document.addEventListener('DOMContentLoaded', () => {
+            try { initTheme(); } catch(e) {}
+            try { startPresenceHeartbeat(); } catch(e) {}
+        });
+
         // Currency functions
         function selectCurrency(type) {
             document.querySelectorAll('.currency-option').forEach(el => el.classList.remove('selected'));
@@ -3150,6 +3666,15 @@
                 filtered = filtered.filter(i => i.name.toLowerCase().includes(searchTerm));
             }
 
+            // Sort: Featured first (newest featured at top within their group), then the rest
+            // by id (existing default). Stable sort keeps category-filtered order intact.
+            filtered = filtered.slice().sort((a, b) => {
+                const af = a.featured ? 1 : 0;
+                const bf = b.featured ? 1 : 0;
+                if (af !== bf) return bf - af;
+                return (b.id || 0) - (a.id || 0);
+            });
+
             if (filtered.length === 0) {
                 list.innerHTML = '<div class="empty-state">No items found</div>';
                 return;
@@ -3157,7 +3682,7 @@
 
             filtered.forEach((item, index) => {
                 const div = document.createElement('div');
-                div.className = 'item-row';
+                div.className = 'item-row' + (item.featured ? ' is-featured' : '');
                 div.style.animationDelay = `${index * 0.03}s`;
                 const amt = (typeof item.amount === 'number' && item.amount >= 0) ? item.amount : null;
                 const amountTag = amt === null
@@ -3167,6 +3692,32 @@
                 const perPurchaseTag = (!isNaN(perPurchase) && perPurchase > 0)
                     ? `<span class="tag tag-perpurchase">${perPurchase} per purchase</span>`
                     : '';
+                const featuredTag = item.featured
+                    ? '<span class="tag tag-featured">★ Featured</span>'
+                    : '';
+                const restockTag = item.restockEta
+                    ? `<span class="tag tag-restock" title="Expected back in stock">Restock soon · ${formatRestockDate(item.restockEta)}</span>`
+                    : '';
+                const isBundle = Array.isArray(item.bundleIncludes) && item.bundleIncludes.length > 0;
+                const bundleTag = isBundle
+                    ? '<span class="tag tag-bundle">📦 Bundle</span>'
+                    : '';
+                const bundleBlock = isBundle
+                    ? `<div class="bundle-includes"><strong>Includes:</strong><ul>${item.bundleIncludes.map(line => `<li>${escapeHtml(line)}</li>`).join('')}</ul></div>`
+                    : '';
+                const rating = getItemRating(item.id);
+                const ratingLine = rating
+                    ? `<div class="item-rating" title="${rating.count} review${rating.count === 1 ? '' : 's'}"><span class="stars">${renderStarBar(rating.avg, 5)}</span> <span class="avg">${rating.avg.toFixed(1)}</span> <span class="count">(${rating.count})</span></div>`
+                    : '';
+                const reviewList = getItemReviews(item.id).slice(0, 3);
+                const reviewsBlock = reviewList.length === 0
+                    ? ''
+                    : `<details class="item-reviews"><summary>${rating ? rating.count : 0} customer review${(rating && rating.count === 1) ? '' : 's'}</summary>${reviewList.map(r => `
+                        <div class="review-line">
+                            <span class="stars">${renderStarBar(r.rating, 5)}</span>
+                            <span class="who">${escapeHtml(r.account || 'guest')}</span>
+                            ${r.text ? `<div class="text">${escapeHtml(r.text)}</div>` : ''}
+                        </div>`).join('')}</details>`;
                 // Show the "NEW" ribbon for 24 hours from item creation. Items without
                 // createdAt (legacy data) never get the ribbon.
                 const createdAt = Number(item.createdAt) || 0;
@@ -3176,12 +3727,18 @@
                     ${newRibbon}
                     <div class="item-info">
                         <div class="item-name">${item.name}</div>
+                        ${ratingLine}
                         <div class="item-tags">
+                            ${featuredTag}
+                            ${bundleTag}
                             <span class="tag tag-item">item</span>
                             <span class="tag tag-category">${item.category}</span>
                             ${perPurchaseTag}
                             ${amountTag}
+                            ${restockTag}
                         </div>
+                        ${bundleBlock}
+                        ${reviewsBlock}
                     </div>
                     <div class="item-actions">
                         <div class="item-price">
@@ -3204,6 +3761,20 @@
                 list.appendChild(div);
             });
             scheduleNewRibbonRefresh();
+        }
+
+        function formatRestockDate(ms) {
+            const d = new Date(Number(ms) || 0);
+            if (isNaN(d.getTime())) return '';
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const target = new Date(d);
+            target.setHours(0, 0, 0, 0);
+            const diff = Math.round((target - today) / (24 * 60 * 60 * 1000));
+            if (diff <= 0) return 'today';
+            if (diff === 1) return 'tomorrow';
+            if (diff < 7) return `in ${diff} days`;
+            return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
         }
 
         function searchItems() {
@@ -3407,6 +3978,11 @@
         }
 
         function placeOrder() {
+            // IP ban check — blocked addresses can't place orders.
+            if (isVisitorBlocked()) {
+                showToast('Sorry, this address is blocked from placing orders.');
+                return;
+            }
             const mcUser = document.getElementById('mcUsername').value.trim();
             const discord = document.getElementById('discordUser').value.trim();
             const coords = document.getElementById('coords').value.trim();
@@ -3717,6 +4293,9 @@
                 try { syncNotifyTogglesUI(); } catch(e) {}
             }
             if (tab === 'discounts') renderAdminDiscounts();
+            if (tab === 'dashboard') renderDashboard();
+            if (tab === 'reviews') renderAdminReviews();
+            if (tab === 'bans') renderAdminBans();
         }
 
         // Orders Management
@@ -3875,12 +4454,19 @@
                         <div class="order-detail-item"><strong>Coords</strong>${escapeHtml(coords)}</div>
                         <div class="order-detail-item"><strong>Dimension</strong>${escapeHtml(dimension)}</div>
                         <div class="order-detail-item"><strong>Total Items</strong>${totalQty}</div>
+                        <div class="order-detail-item order-ip-line"><strong>IP <span class="hint">(owner only)</span></strong>${cust.ip ? `<span class="ip-badge">${escapeHtml(cust.ip)}</span> <button class="btn btn--ghost btn--sm" style="padding:0.25rem 0.5rem; font-size:0.75rem; margin-left:0.4rem;" onclick="quickBanIp(${JSON.stringify(cust.ip)})">Ban / warn</button>` : '<span style="opacity:0.6;">not recorded</span>'}</div>
                     </div>
                     ${otherNote ? `<div style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 6px; margin-top: 0.75rem; font-size: 0.875rem; color: var(--text-secondary);"><strong style="color: var(--text-primary);">Note:</strong> ${escapeHtml(otherNote)}</div>` : ''}
                     <div class="order-items-list">
                         <strong>Items Ordered</strong>
                         ${itemRows}
                         ${totalsBlock}
+                    </div>
+                    <div class="owner-notes-block">
+                        <label for="ownerNotes-${escapeHtml(String(id))}"><strong>Owner notes</strong> <span class="hint">(internal — never shown to the customer)</span></label>
+                        <textarea id="ownerNotes-${escapeHtml(String(id))}" rows="2" placeholder="e.g. delivered to coords -120, 64, 308 · paid in full · customer was AFK"
+                            oninput="saveOwnerNotes(${JSON.stringify(id)}, this.value)"
+                            onblur="saveOwnerNotes(${JSON.stringify(id)}, this.value)">${escapeHtml((order && order.ownerNotes) || '')}</textarea>
                     </div>
                     <div class="order-actions">
                         ${stageButtons}
@@ -4037,6 +4623,11 @@
                     <td>${(typeof item.amount === 'number' && item.amount >= 0) ? item.amount : '<span style="color: var(--text-secondary);">—</span>'}</td>
                     <td><span class="stock-badge ${statusClass(getItemStatus(item))}">${statusLabel(getItemStatus(item))}</span></td>
                     <td>
+                        <button class="btn btn--ghost btn--sm" onclick="toggleFeatured(${item.id})" title="${item.featured ? 'Unpin from top' : 'Pin to top of shop'}" style="${item.featured ? 'color: #ffb300; border-color: rgba(255,179,0,0.5);' : ''}">
+                            ${item.featured ? '★ Featured' : '☆ Pin'}
+                        </button>
+                    </td>
+                    <td>
                         <button class="btn btn--ghost btn--sm" onclick="editItem(${item.id})" title="Edit item">
                             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
                             <span>Edit</span>
@@ -4061,6 +4652,20 @@
             const status = (statusVal === 'selling' || statusVal === 'available' || statusVal === 'not_selling') ? statusVal : 'selling';
             const amountRaw = document.getElementById('itemAmount').value;
             const amount = (amountRaw === '' || isNaN(parseInt(amountRaw))) ? null : Math.max(0, parseInt(amountRaw));
+            const featured = !!(document.getElementById('itemFeatured') || {}).checked;
+            const restockRaw = (document.getElementById('itemRestockEta') || {}).value || '';
+            let restockEta = null;
+            if (restockRaw) {
+                const r = new Date(restockRaw + 'T23:59:59');
+                if (!isNaN(r.getTime())) restockEta = r.getTime();
+            }
+            const bundleRaw = (document.getElementById('itemBundle') || {}).value || '';
+            const bundleIncludes = bundleRaw.split('\n')
+                .map(l => l.trim())
+                .filter(l => l.length > 0)
+                .slice(0, 20);
+            const lowStockRaw = (document.getElementById('itemLowStock') || {}).value;
+            const lowStockThreshold = (lowStockRaw === '' || lowStockRaw == null || isNaN(parseInt(lowStockRaw))) ? null : Math.max(0, parseInt(lowStockRaw));
 
             if (!name || !price || !quantity) {
                 showToast('Please fill in Name, Price and Quantity');
@@ -4075,7 +4680,7 @@
             if (editingItem) {
                 itemId = editingItem;
                 const existing = items.find(i => i.id === editingItem) || {};
-                payload = { ...existing, id: editingItem, name, category, currency, price, quantity, description, status, amount };
+                payload = { ...existing, id: editingItem, name, category, currency, price, quantity, description, status, amount, featured, restockEta, bundleIncludes, lowStockThreshold };
                 delete payload.inStock;
                 editingItem = null;
                 document.getElementById('formTitle').textContent = 'Add New Item';
@@ -4084,7 +4689,7 @@
             } else {
                 itemId = Date.now();
                 // createdAt drives the auto-expiring "New" ribbon (24h shelf life).
-                payload = { id: itemId, name, category, currency, price, quantity, description, status, amount, createdAt: Date.now() };
+                payload = { id: itemId, name, category, currency, price, quantity, description, status, amount, featured, restockEta, bundleIncludes, lowStockThreshold, createdAt: Date.now() };
             }
 
             setDoc(doc(db, 'items', String(itemId)), payload)
@@ -4106,6 +4711,17 @@
             document.getElementById('itemDesc').value = item.description;
             document.getElementById('itemStock').value = getItemStatus(item);
             document.getElementById('itemAmount').value = (item.amount === null || item.amount === undefined) ? '' : item.amount;
+            const featuredEl = document.getElementById('itemFeatured');
+            if (featuredEl) featuredEl.checked = !!item.featured;
+            const restockEl = document.getElementById('itemRestockEta');
+            if (restockEl) {
+                const r = Number(item.restockEta) || 0;
+                restockEl.value = r ? new Date(r).toISOString().slice(0, 10) : '';
+            }
+            const bundleEl = document.getElementById('itemBundle');
+            if (bundleEl) bundleEl.value = Array.isArray(item.bundleIncludes) ? item.bundleIncludes.join('\n') : '';
+            const lowEl = document.getElementById('itemLowStock');
+            if (lowEl) lowEl.value = (item.lowStockThreshold == null) ? '' : item.lowStockThreshold;
             
             const currency = item.currency || 'diamonds';
             selectCurrency(currency);
@@ -4139,6 +4755,10 @@
             document.getElementById('itemAmount').value = '';
             document.getElementById('itemDesc').value = '';
             document.getElementById('itemStock').value = 'selling';
+            const f = document.getElementById('itemFeatured'); if (f) f.checked = false;
+            const r = document.getElementById('itemRestockEta'); if (r) r.value = '';
+            const b = document.getElementById('itemBundle'); if (b) b.value = '';
+            const ls = document.getElementById('itemLowStock'); if (ls) ls.value = '';
             selectCurrency('diamonds');
             document.getElementById('itemCurrency').value = 'diamonds';
         }
@@ -4370,6 +4990,8 @@
             // Prevent body scroll while overlay active
             document.body.style.overflow = show ? 'hidden' : '';
 
+            renderMaintenanceCountdown();
+
             // Update owner-panel toggle button + status
             const btn = document.getElementById('maintenanceToggleBtn');
             const status = document.getElementById('maintenanceStatus');
@@ -4392,13 +5014,588 @@
             }
         }
 
+        function renderMaintenanceCountdown() {
+            const wrap = document.getElementById('maintenanceCountdown');
+            const timeEl = document.getElementById('maintenanceCountdownTime');
+            if (!wrap || !timeEl) return;
+            if (!__maintenance || !__maintenanceEta) {
+                wrap.style.display = 'none';
+                if (__countdownTimer) { clearInterval(__countdownTimer); __countdownTimer = null; }
+                return;
+            }
+            wrap.style.display = '';
+            const tick = () => {
+                const remaining = Math.max(0, __maintenanceEta - Date.now());
+                if (remaining <= 0) {
+                    timeEl.textContent = 'any moment now';
+                    return;
+                }
+                const totalSec = Math.floor(remaining / 1000);
+                const days = Math.floor(totalSec / 86400);
+                const h = Math.floor((totalSec % 86400) / 3600);
+                const m = Math.floor((totalSec % 3600) / 60);
+                const s = totalSec % 60;
+                const pad = n => String(n).padStart(2, '0');
+                if (days > 0) {
+                    timeEl.textContent = `${days}d ${pad(h)}:${pad(m)}:${pad(s)}`;
+                } else {
+                    timeEl.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+                }
+            };
+            tick();
+            if (__countdownTimer) clearInterval(__countdownTimer);
+            __countdownTimer = setInterval(tick, 1000);
+        }
+
+        // Convert a ms timestamp to a value usable by <input type="datetime-local">.
+        function toLocalDatetimeInput(ms) {
+            const d = new Date(Number(ms) || 0);
+            if (isNaN(d.getTime())) return '';
+            const pad = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
+        function saveMaintenanceEta() {
+            if (!fsbReady()) { showToast('Not connected'); return; }
+            const input = document.getElementById('maintenanceEtaInput');
+            if (!input || !input.value) { showToast('Pick a date/time first'); return; }
+            const ms = new Date(input.value).getTime();
+            if (isNaN(ms)) { showToast('Invalid date'); return; }
+            const { db, doc, setDoc } = window.FSB;
+            setDoc(doc(db, 'config', 'maintenance'),
+                { enabled: __maintenance, updatedAt: __maintenanceUpdatedAt || new Date().toISOString(), eta: ms },
+                { merge: true })
+                .then(() => showToast('ETA saved'))
+                .catch(err => { console.error(err); showToast('Save failed'); });
+        }
+        function clearMaintenanceEta() {
+            if (!fsbReady()) { showToast('Not connected'); return; }
+            const { db, doc, setDoc } = window.FSB;
+            setDoc(doc(db, 'config', 'maintenance'),
+                { enabled: __maintenance, updatedAt: __maintenanceUpdatedAt || new Date().toISOString(), eta: 0 },
+                { merge: true })
+                .then(() => {
+                    showToast('ETA cleared');
+                    const inp = document.getElementById('maintenanceEtaInput');
+                    if (inp) inp.value = '';
+                })
+                .catch(err => { console.error(err); showToast('Clear failed'); });
+        }
+
         function toggleMaintenance() {
             if (!fsbReady()) return;
             const { db, doc, setDoc } = window.FSB;
             const newVal = !__maintenance;
-            setDoc(doc(db, 'config', 'maintenance'), { enabled: newVal, updatedAt: new Date().toISOString() })
+            setDoc(doc(db, 'config', 'maintenance'),
+                { enabled: newVal, updatedAt: new Date().toISOString(), eta: __maintenanceEta || 0 },
+                { merge: true })
                 .then(() => showToast(newVal ? 'Update Mode ON' : 'Update Mode OFF'))
                 .catch(err => { console.error(err); showToast('Toggle failed'); });
+        }
+
+        // ===== Featured toggle (one-click pin from admin items table) =====
+        function toggleFeatured(id) {
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+            if (!fsbReady()) { showToast('Not connected'); return; }
+            const { db, doc, updateDoc } = window.FSB;
+            const next = !item.featured;
+            updateDoc(doc(db, 'items', String(id)), { featured: next })
+                .then(() => showToast(next ? '★ Pinned to top' : 'Unpinned'))
+                .catch(err => { console.error(err); showToast('Update failed'); });
+        }
+
+        // ===== Theme toggle (light / dark) — per-device via localStorage =====
+        function initTheme() {
+            let theme = 'dark';
+            try { theme = localStorage.getItem('shopTheme') || 'dark'; } catch(e) {}
+            document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+        }
+        function toggleTheme() {
+            const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+            const next = cur === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            try { localStorage.setItem('shopTheme', next); } catch(e) {}
+            showToast(next === 'light' ? 'Light theme on' : 'Dark theme on');
+        }
+
+        // ===== Live presence (currently shopping) =====
+        // Each tab writes a heartbeat doc every ~30s. The listener counts docs
+        // with a recent lastSeen and renders the pill.
+        function getPresenceId() {
+            try {
+                let id = sessionStorage.getItem('shopPresenceId');
+                if (!id) {
+                    id = 'p_' + Math.random().toString(36).slice(2) + '_' + Date.now().toString(36);
+                    sessionStorage.setItem('shopPresenceId', id);
+                }
+                return id;
+            } catch(e) {
+                return 'p_' + Math.random().toString(36).slice(2);
+            }
+        }
+        function startPresenceHeartbeat() {
+            if (__presenceTimer) return;
+            const beat = () => {
+                if (!fsbReady()) return;
+                const { db, doc, setDoc } = window.FSB;
+                const id = getPresenceId();
+                setDoc(doc(db, 'presence', id), { id, lastSeen: Date.now() }, { merge: true })
+                    .catch(() => {});
+            };
+            beat();
+            // 30s heartbeat; 60s "active" cutoff in the listener gives one missed beat of grace.
+            __presenceTimer = setInterval(beat, 30 * 1000);
+            // Best-effort cleanup when the tab closes.
+            window.addEventListener('beforeunload', () => {
+                if (!fsbReady()) return;
+                try {
+                    const { db, doc, deleteDoc } = window.FSB;
+                    deleteDoc(doc(db, 'presence', getPresenceId()));
+                } catch(e) {}
+            });
+        }
+        function renderPresencePill() {
+            const pill = document.getElementById('presencePill');
+            const cnt = document.getElementById('presenceCount');
+            const lbl = document.getElementById('presenceLabel');
+            if (!pill || !cnt || !lbl) return;
+            const n = Math.max(1, Number(__presenceCount) || 1);
+            cnt.textContent = n;
+            lbl.textContent = n === 1 ? 'person' : 'people';
+            pill.style.display = '';
+        }
+
+        // ===== Owner notes on orders (debounced auto-save on blur/change) =====
+        function saveOwnerNotes(orderId, value) {
+            if (!fsbReady()) return;
+            // Debounce per orderId: each keystroke pushes the timer; saves 800ms after last edit.
+            if (__ownerNotesTimer[orderId]) clearTimeout(__ownerNotesTimer[orderId]);
+            __ownerNotesTimer[orderId] = setTimeout(() => {
+                const { db, doc, updateDoc } = window.FSB;
+                updateDoc(doc(db, 'orders', String(orderId)), { ownerNotes: String(value || '') })
+                    .catch(err => { console.error('Notes save failed', err); });
+            }, 800);
+        }
+
+        // ===== Sales Dashboard =====
+        function renderDashboard() {
+            const grid = document.getElementById('dashboardGrid');
+            const top = document.getElementById('dashboardTopItems');
+            const recent = document.getElementById('dashboardRecent');
+            if (!grid) return;
+
+            const completed = orders.filter(o => normalizeStatus(o && o.status) === 'completed');
+            const allCount = orders.length;
+            const completedCount = completed.length;
+            const pendingCount = allCount - completedCount;
+
+            let diamondsEarned = 0;
+            let netheriteEarned = 0;
+            const itemTally = {};
+
+            completed.forEach(o => {
+                const t = (o && o.totals) || {};
+                if (t.diamonds && Number(t.diamonds.total)) diamondsEarned += Number(t.diamonds.total);
+                if (t.netherite && Number(t.netherite.total)) netheriteEarned += Number(t.netherite.total);
+                // Fallback for legacy orders with no totals: sum item line totals.
+                if (!t.diamonds && !t.netherite && Array.isArray(o.items)) {
+                    o.items.forEach(line => {
+                        const cur = (line && line.currency) || 'diamonds';
+                        const sum = (Number(line && line.price) || 0) * (Number(line && line.cartQty) || 0);
+                        if (cur === 'netherite') netheriteEarned += sum;
+                        else diamondsEarned += sum;
+                    });
+                }
+                if (Array.isArray(o.items)) {
+                    o.items.forEach(line => {
+                        const name = (line && line.name) || 'unknown';
+                        const qty = Number(line && line.cartQty) || 0;
+                        itemTally[name] = (itemTally[name] || 0) + qty;
+                    });
+                }
+            });
+
+            grid.innerHTML = `
+                <div class="dashboard-card accent-blue">
+                    <div class="label">Diamonds earned</div>
+                    <div class="value">${diamondsEarned.toLocaleString()}</div>
+                    <div class="sub">from completed orders</div>
+                </div>
+                <div class="dashboard-card accent-purple">
+                    <div class="label">Netherite earned</div>
+                    <div class="value">${netheriteEarned.toLocaleString()}</div>
+                    <div class="sub">from completed orders</div>
+                </div>
+                <div class="dashboard-card accent-success">
+                    <div class="label">Completed orders</div>
+                    <div class="value">${completedCount.toLocaleString()}</div>
+                    <div class="sub">${allCount} total · ${pendingCount} in progress</div>
+                </div>
+                <div class="dashboard-card accent-warning">
+                    <div class="label">Active items</div>
+                    <div class="value">${items.length.toLocaleString()}</div>
+                    <div class="sub">${items.filter(i => i.featured).length} featured · ${items.filter(i => Array.isArray(i.bundleIncludes) && i.bundleIncludes.length).length} bundles</div>
+                </div>
+            `;
+
+            const topList = Object.entries(itemTally)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            if (top) {
+                top.innerHTML = topList.length === 0
+                    ? '<p style="color: var(--text-secondary); font-size: 0.85rem; margin:0;">No completed orders yet — top items will show here once you mark some orders complete.</p>'
+                    : topList.map(([name, qty]) => `
+                        <div class="top-row">
+                            <span class="name">${escapeHtml(name)}</span>
+                            <span class="qty">${qty} sold</span>
+                        </div>`).join('');
+            }
+            if (recent) {
+                const last = orders.slice(0, 5);
+                recent.innerHTML = last.length === 0
+                    ? '<p style="color: var(--text-secondary); font-size: 0.85rem; margin:0;">No orders yet.</p>'
+                    : last.map(o => {
+                        const cust = (o && o.customer) || {};
+                        const stage = normalizeStatus(o && o.status);
+                        return `
+                            <div class="top-row">
+                                <span class="name">#${escapeHtml(String(o.id))} · ${escapeHtml(cust.mcUser || '(unknown)')}</span>
+                                <span class="qty">${(ORDER_STAGE_LABELS && ORDER_STAGE_LABELS[stage]) || stage}</span>
+                            </div>`;
+                    }).join('');
+            }
+        }
+
+        // ===== IP bans + warnings =====
+        // Doc id = ip. Local list __bans.
+        function findBanByIp(ip) {
+            if (!ip) return null;
+            return (__bans || []).find(b => String(b.ip) === String(ip)) || null;
+        }
+        function isVisitorBlocked() {
+            const b = findBanByIp(getCachedIp());
+            return !!(b && b.action === 'ban');
+        }
+        function isVisitorWarned() {
+            const b = findBanByIp(getCachedIp());
+            return !!(b && b.action === 'warn');
+        }
+        function maybeShowWarnToast() {
+            if (__warnToastShownThisSession) return;
+            const b = findBanByIp(getCachedIp());
+            if (!b || b.action !== 'warn') return;
+            __warnToastShownThisSession = true;
+            const reason = b.reason ? ` · ${b.reason}` : '';
+            showToast('⚠ Warning from shop owner' + reason);
+        }
+        function saveBan() {
+            if (!fsbReady()) { showToast('Not connected — try again in a moment'); return; }
+            const ipEl = document.getElementById('banIpInput');
+            const actEl = document.getElementById('banActionInput');
+            const reasonEl = document.getElementById('banReasonInput');
+            const ip = (ipEl ? ipEl.value : '').trim();
+            const action = (actEl && actEl.value) === 'warn' ? 'warn' : 'ban';
+            const reason = (reasonEl ? reasonEl.value : '').trim();
+            if (!ip) { showToast('Enter an IP address'); return; }
+            // Doc ids can't contain '/', so swap any in IPv6-with-zone variants.
+            const safeId = ip.replace(/\//g, '_');
+            const { db, doc, setDoc } = window.FSB;
+            setDoc(doc(db, 'bans', safeId), { ip, action, reason, createdAt: Date.now() })
+                .then(() => {
+                    showToast(action === 'ban' ? 'IP banned' : 'IP warned');
+                    if (ipEl) ipEl.value = '';
+                    if (reasonEl) reasonEl.value = '';
+                })
+                .catch(err => { console.error(err); showToast('Save failed'); });
+        }
+        function quickBanIp(ip) {
+            if (!ip) return;
+            const ipEl = document.getElementById('banIpInput');
+            if (ipEl) ipEl.value = ip;
+            switchPanel('bans');
+            try { ipEl && ipEl.focus(); } catch(e) {}
+        }
+        function removeBan(ip) {
+            if (!fsbReady() || !ip) return;
+            if (!confirm('Remove ' + ip + ' from the list?')) return;
+            const safeId = String(ip).replace(/\//g, '_');
+            const { db, doc, deleteDoc } = window.FSB;
+            deleteDoc(doc(db, 'bans', safeId))
+                .then(() => showToast('Removed'))
+                .catch(err => { console.error(err); showToast('Delete failed'); });
+        }
+        function renderAdminBans() {
+            const tbody = document.getElementById('adminBansList');
+            if (!tbody) return;
+            if (!__bans || __bans.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:1rem; color:var(--text-secondary);">No banned or warned IPs yet.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = __bans.map(b => {
+                const action = b.action === 'warn' ? 'warn' : 'ban';
+                const badge = action === 'ban'
+                    ? '<span class="ban-pill ban-pill-ban">BAN</span>'
+                    : '<span class="ban-pill ban-pill-warn">WARN</span>';
+                const created = b.createdAt ? new Date(Number(b.createdAt)).toLocaleString() : '—';
+                return `
+                    <tr>
+                        <td><span class="ip-badge">${escapeHtml(String(b.ip || ''))}</span></td>
+                        <td>${badge}</td>
+                        <td>${escapeHtml(b.reason || '—')}</td>
+                        <td>${escapeHtml(created)}</td>
+                        <td><button class="btn btn--danger btn--sm" onclick="removeBan(${JSON.stringify(b.ip)})">Remove</button></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ===== Customer reviews =====
+        // Reviews live in 'reviews' collection. A customer can post a review for an item
+        // only if they have a Completed order containing that item from this account.
+        function getItemReviews(itemId) {
+            return (__reviews || []).filter(r => r && Number(r.itemId) === Number(itemId) && !r.hidden);
+        }
+        function getItemRating(itemId) {
+            const list = getItemReviews(itemId);
+            if (list.length === 0) return null;
+            const sum = list.reduce((s, r) => s + (Number(r.rating) || 0), 0);
+            return { avg: sum / list.length, count: list.length };
+        }
+        function renderStarBar(avg, max) {
+            const m = max || 5;
+            const a = Math.max(0, Math.min(m, Number(avg) || 0));
+            const full = Math.floor(a);
+            const half = (a - full) >= 0.5 ? 1 : 0;
+            const empty = m - full - half;
+            return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
+        }
+        function customerCanReviewItem(itemId, account) {
+            if (!account) return false;
+            const acctL = String(account).toLowerCase();
+            return (orders || []).some(o => {
+                if (!o || normalizeStatus(o.status) !== 'completed') return false;
+                const c = (o.customer || {});
+                if (String(c.account || '').toLowerCase() !== acctL) return false;
+                return Array.isArray(o.items) && o.items.some(i => Number(i.id) === Number(itemId));
+            });
+        }
+        function customerHasReviewedItem(itemId, account) {
+            if (!account) return false;
+            const acctL = String(account).toLowerCase();
+            return (__reviews || []).some(r => Number(r.itemId) === Number(itemId) && String(r.account || '').toLowerCase() === acctL);
+        }
+        function openReviewPrompt(itemId) {
+            const acct = getCurrentUser();
+            if (!acct) { showToast('Sign in to leave a review'); return; }
+            const item = items.find(i => Number(i.id) === Number(itemId));
+            if (!item) return;
+            if (!customerCanReviewItem(itemId, acct)) {
+                showToast('You can review this once your order is marked Completed');
+                return;
+            }
+            if (customerHasReviewedItem(itemId, acct)) {
+                showToast('You already reviewed this item');
+                return;
+            }
+            const ratingStr = prompt('Rate ' + item.name + ' (1–5 stars):', '5');
+            if (ratingStr == null) return;
+            const rating = Math.max(1, Math.min(5, parseInt(ratingStr) || 0));
+            if (!rating) { showToast('Enter 1, 2, 3, 4 or 5'); return; }
+            const text = (prompt('Short comment (optional, 200 chars max):', '') || '').slice(0, 200).trim();
+            const id = 'rv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+            const payload = {
+                id, itemId: Number(itemId), itemName: item.name,
+                account: acct, rating, text, createdAt: Date.now(), hidden: false
+            };
+            if (!fsbReady()) { showToast('Not connected — try again in a moment'); return; }
+            const { db, doc, setDoc } = window.FSB;
+            setDoc(doc(db, 'reviews', id), payload)
+                .then(() => showToast('Thanks for the review!'))
+                .catch(err => { console.error(err); showToast('Could not post review'); });
+        }
+        function setReviewHidden(id, hidden) {
+            if (!fsbReady() || !id) return;
+            const { db, doc, updateDoc } = window.FSB;
+            updateDoc(doc(db, 'reviews', id), { hidden: !!hidden })
+                .then(() => showToast(hidden ? 'Hidden from public' : 'Restored'))
+                .catch(err => { console.error(err); showToast('Update failed'); });
+        }
+        function deleteReview(id) {
+            if (!fsbReady() || !id) return;
+            if (!confirm('Permanently delete this review?')) return;
+            const { db, doc, deleteDoc } = window.FSB;
+            deleteDoc(doc(db, 'reviews', id))
+                .then(() => showToast('Review deleted'))
+                .catch(err => { console.error(err); showToast('Delete failed'); });
+        }
+        function renderAdminReviews() {
+            const wrap = document.getElementById('adminReviewsList');
+            if (!wrap) return;
+            if (!__reviews || __reviews.length === 0) {
+                wrap.innerHTML = '<div class="empty-state" style="padding:1rem;">No reviews yet — customers can post one after their order is marked Completed.</div>';
+                return;
+            }
+            wrap.innerHTML = __reviews.map(r => {
+                const stars = renderStarBar(r.rating, 5);
+                const created = r.createdAt ? new Date(Number(r.createdAt)).toLocaleString() : '—';
+                const hideBtn = r.hidden
+                    ? `<button class="btn btn--ghost btn--sm" onclick="setReviewHidden(${JSON.stringify(r.id)}, false)">Restore</button>`
+                    : `<button class="btn btn--ghost btn--sm" onclick="setReviewHidden(${JSON.stringify(r.id)}, true)">Hide</button>`;
+                return `
+                    <div class="review-card ${r.hidden ? 'is-hidden' : ''}">
+                        <div class="review-head">
+                            <span class="review-stars">${stars}</span>
+                            <span class="review-meta">${escapeHtml(r.itemName || '?')} · by ${escapeHtml(r.account || 'guest')} · ${escapeHtml(created)}${r.hidden ? ' · <em>hidden</em>' : ''}</span>
+                        </div>
+                        ${r.text ? `<div class="review-text">${escapeHtml(r.text)}</div>` : ''}
+                        <div class="review-actions">
+                            ${hideBtn}
+                            <button class="btn btn--danger btn--sm" onclick="deleteReview(${JSON.stringify(r.id)})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ===== Stock-low alerts (owner only) =====
+        function checkLowStockTransitions(prevItems, nextItems) {
+            // Only the owner cares about these toasts.
+            if (!isOwnerLoggedIn()) return;
+            const prevById = {};
+            (prevItems || []).forEach(p => { if (p && p.id != null) prevById[p.id] = p; });
+            (nextItems || []).forEach(n => {
+                if (!n || n.id == null) return;
+                const t = Number(n.lowStockThreshold);
+                if (!Number.isFinite(t) || t <= 0) return;       // not configured
+                if (typeof n.amount !== 'number') return;        // amount not tracked
+                const prev = prevById[n.id];
+                const wasAbove = prev && typeof prev.amount === 'number' ? prev.amount > t : true;
+                const nowAtOrBelow = n.amount <= t;
+                if (wasAbove && nowAtOrBelow && __lowStockSeen[n.id] !== n.amount) {
+                    __lowStockSeen[n.id] = n.amount;
+                    const msg = `Low stock: ${n.name} · ${n.amount} left (threshold ${t})`;
+                    showToast(msg);
+                    try { showLowStockNotification(n, t); } catch(e) {}
+                }
+                // Reset memo once they restock above threshold so we'll alert again next time.
+                if (n.amount > t) { delete __lowStockSeen[n.id]; }
+            });
+        }
+        function showLowStockNotification(item, threshold) {
+            // Reuse the desktop notification preference the owner already toggled
+            // for new orders. No new permission flow.
+            try {
+                const enabled = localStorage.getItem('shopOwnerDesktopNotifs') === '1';
+                if (!enabled) return;
+                if (!('Notification' in window) || Notification.permission !== 'granted') return;
+                new Notification('Low stock — ' + item.name, {
+                    body: `${item.amount} left (threshold ${threshold})`,
+                    tag: 'lowstock-' + item.id
+                });
+            } catch (e) { /* no-op */ }
+        }
+
+        // ===== Quick reorder =====
+        function reorderFromHistory(orderId) {
+            const o = (orders || []).find(x => String(x.id) === String(orderId));
+            if (!o || !Array.isArray(o.items)) { showToast('Order not found'); return; }
+            let added = 0, skipped = 0;
+            o.items.forEach(line => {
+                const live = items.find(it => Number(it.id) === Number(line.id));
+                if (!live) { skipped++; return; }
+                if (!canOrder(live)) { skipped++; return; }
+                const qty = Number(line.cartQty) || 1;
+                const existing = cart.find(c => Number(c.id) === Number(live.id));
+                if (existing) { existing.cartQty = (Number(existing.cartQty) || 0) + qty; }
+                else {
+                    const copy = JSON.parse(JSON.stringify(live));
+                    copy.cartQty = qty;
+                    cart.push(copy);
+                }
+                added++;
+            });
+            saveCart();
+            updateCartCount();
+            const msg = added > 0
+                ? (skipped > 0 ? `Re-added ${added} items · ${skipped} unavailable` : `Re-added ${added} items to your cart`)
+                : 'Nothing could be re-added';
+            showToast(msg);
+            if (added > 0) {
+                try { closeAccount(); } catch(e) {}
+                try { document.getElementById('cartOverlay').classList.add('active'); } catch(e) {}
+            }
+        }
+
+        // ===== Print-friendly receipt =====
+        function openReceipt(orderId) {
+            const o = (orders || []).find(x => String(x.id) === String(orderId));
+            if (!o) { showToast('Order not found'); return; }
+            const cust = o.customer || {};
+            const items = Array.isArray(o.items) ? o.items : [];
+            const stage = normalizeStatus(o.status);
+            const t = o.totals || {};
+            const d = t.diamonds || { subtotal: 0, saved: 0, total: 0 };
+            const n = t.netherite || { subtotal: 0, saved: 0, total: 0 };
+            const rows = items.map(i => `
+                <tr>
+                    <td>${escapeHtml(i.name || '?')}</td>
+                    <td style="text-align:center;">×${Number(i.cartQty) || 0}</td>
+                    <td style="text-align:right;">${(Number(i.price) || 0) * (Number(i.cartQty) || 0)} ${escapeHtml(i.currency === 'netherite' ? 'Netherite' : 'Diamonds')}</td>
+                </tr>
+            `).join('');
+            const totalLine = (() => {
+                const parts = [];
+                if (d.total > 0) parts.push(`${d.total} Diamonds`);
+                if (n.total > 0) parts.push(`${n.total} Netherite`);
+                return parts.join(' + ') || '—';
+            })();
+            const disc = (o.discount && o.discount.code)
+                ? `<tr><td colspan="2">Discount ${escapeHtml(o.discount.code)} (${o.discount.percent}% off)</td><td style="text-align:right; color:#0a0;">−${(d.saved||0)} D / −${(n.saved||0)} N</td></tr>`
+                : '';
+            const html = `<!doctype html>
+<html><head><meta charset="utf-8"><title>Receipt — Order #${escapeHtml(String(o.id))}</title>
+<style>
+    body { font: 14px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif; color:#111; max-width:680px; margin:2rem auto; padding:0 1.5rem; }
+    h1 { margin:0 0 .25rem; font-size: 1.25rem; }
+    h2 { margin:1.5rem 0 .5rem; font-size: 1rem; border-bottom:1px solid #ddd; padding-bottom:.25rem; }
+    .meta { color:#555; font-size: 12px; }
+    table { width:100%; border-collapse: collapse; margin-top:.5rem; }
+    th, td { padding:.4rem .5rem; border-bottom:1px solid #eee; }
+    th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#666; }
+    .totals td { font-weight:700; border-top:2px solid #111; border-bottom:none; padding-top:.6rem; }
+    .footer { margin-top:2rem; color:#888; font-size:11px; text-align:center; }
+    .badge { display:inline-block; padding:.15rem .5rem; border-radius:99px; background:#eee; font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+    @media print { .noprint { display:none; } body { margin:0; } }
+    .noprint { text-align:center; margin: 1rem 0 1.5rem; }
+    .noprint button { padding:.5rem 1rem; cursor:pointer; }
+</style>
+</head><body>
+<div class="noprint"><button onclick="window.print()">Print this receipt</button></div>
+<h1>Receipt</h1>
+<div class="meta">Order #${escapeHtml(String(o.id))} · placed ${escapeHtml(o.date || '')}</div>
+<div class="meta" style="margin-top:.4rem;">Status: <span class="badge">${escapeHtml((ORDER_STAGE_LABELS[stage] || stage).toString())}</span></div>
+
+<h2>Customer</h2>
+<div>Minecraft: <strong>${escapeHtml(cust.mcUser || '—')}</strong></div>
+<div>Discord: ${escapeHtml(cust.discord || '—')}</div>
+<div>Coords: ${escapeHtml(cust.coords || '—')} · Dimension: ${escapeHtml(cust.dimension || '—')}</div>
+${cust.other ? `<div style="margin-top:.4rem;">Note: ${escapeHtml(cust.other)}</div>` : ''}
+
+<h2>Items</h2>
+<table>
+    <thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Subtotal</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="3" style="color:#888;">No items recorded</td></tr>'}${disc}</tbody>
+    <tfoot><tr class="totals"><td colspan="2">Total</td><td style="text-align:right;">${totalLine}</td></tr></tfoot>
+</table>
+
+<div class="footer">Everything You Need · player-run shop · not affiliated with AetheriaMC</div>
+</body></html>`;
+            const w = window.open('', '_blank', 'width=720,height=900');
+            if (!w) { showToast('Pop-up blocked — allow pop-ups to print receipts'); return; }
+            w.document.open();
+            w.document.write(html);
+            w.document.close();
         }
 
         function checkMaintenanceUnlock(input) {
@@ -4610,6 +5807,8 @@
                     if (ip) {
                         __visitorIp = ip;
                         try { localStorage.setItem('shopLastVisitorIp', ip); } catch (e) {}
+                        // Now that we know our IP, see if the owner has warned us.
+                        try { maybeShowWarnToast(); } catch (e) {}
                     }
                     return ip;
                 })
@@ -4764,6 +5963,12 @@
                 const discText = (disc && disc.code)
                     ? `<div class="my-order-meta" style="color: var(--success);">Discount: ${escapeHtml(disc.code)} (${disc.percent}% off)</div>`
                     : '';
+                const reviewableNames = (stage === 'completed' && Array.isArray(o.items))
+                    ? o.items.filter(i => i && i.id && customerCanReviewItem(i.id, getCurrentUser()) && !customerHasReviewedItem(i.id, getCurrentUser()))
+                    : [];
+                const reviewBtns = reviewableNames.map(i =>
+                    `<button class="btn btn--ghost btn--sm" onclick="openReviewPrompt(${Number(i.id)})">★ Review ${escapeHtml(i.name || 'item')}</button>`
+                ).join(' ');
                 return `
                     <div class="my-order-card">
                         <div class="my-order-head">
@@ -4775,6 +5980,17 @@
                         <div class="my-order-items">${itemSummary || '(no items recorded)'}</div>
                         ${totalText ? `<div class="my-order-meta" style="margin-top: 0.4rem;"><strong style="color: var(--text-primary);">Total:</strong> ${totalText}</div>` : ''}
                         ${discText}
+                        <div class="my-order-actions">
+                            <button class="btn btn--success btn--sm" onclick="reorderFromHistory(${JSON.stringify(id)})">
+                                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                                <span>Reorder</span>
+                            </button>
+                            <button class="btn btn--ghost btn--sm" onclick="openReceipt(${JSON.stringify(id)})">
+                                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                                <span>Print receipt</span>
+                            </button>
+                            ${reviewBtns}
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -4795,6 +6011,7 @@
             const p = document.getElementById('acctSignupPass').value;
             const p2 = document.getElementById('acctSignupPass2').value;
             const err = document.getElementById('acctError');
+            if (isVisitorBlocked()) { err.textContent = 'You are blocked from creating an account here'; return; }
             if (!u || !p) { err.textContent = 'Username and password required'; return; }
             if (u.length < 3) { err.textContent = 'Username must be at least 3 characters'; return; }
             if (p.length < 4) { err.textContent = 'Password must be at least 4 characters'; return; }
@@ -4821,6 +6038,7 @@
             const u = document.getElementById('acctLoginUser').value.trim();
             const p = document.getElementById('acctLoginPass').value;
             const err = document.getElementById('acctError');
+            if (isVisitorBlocked()) { err.textContent = 'You are blocked from signing in here'; return; }
             if (!u || !p) { err.textContent = 'Enter username and password'; return; }
             const users = getUsers();
             const match = users.find(x => x.username.toLowerCase() === u.toLowerCase() && x.password === p);
