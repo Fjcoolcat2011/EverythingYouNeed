@@ -426,6 +426,34 @@
             overflow: hidden;
         }
 
+        /* "New" ribbon — sits on the top-right corner of an item row.
+           Auto-shown for 24h via the createdAt timestamp; no manual toggle. */
+        .item-new-ribbon {
+            position: absolute;
+            top: 14px;
+            right: -34px;
+            transform: rotate(35deg);
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee0979 100%);
+            color: #ffffff;
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.18em;
+            padding: 0.28rem 2.6rem;
+            box-shadow: 0 6px 14px rgba(238, 9, 121, 0.45), 0 0 12px rgba(255, 107, 107, 0.55);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+            text-transform: uppercase;
+            pointer-events: none;
+            z-index: 2;
+        }
+        @media (max-width: 768px) {
+            .item-new-ribbon {
+                top: 10px;
+                right: -38px;
+                font-size: 0.65rem;
+                padding: 0.22rem 2.4rem;
+            }
+        }
+
         .item-row::before {
             content: '';
             position: absolute;
@@ -1127,6 +1155,127 @@
             color: var(--success);
             border: 1px solid rgba(63, 185, 80, 0.3);
             box-shadow: 0 0 10px var(--success-glow);
+        }
+
+        .status-confirmed {
+            background: rgba(74, 158, 255, 0.15);
+            color: #93c5fd;
+            border: 1px solid rgba(74, 158, 255, 0.3);
+        }
+
+        .status-delivered {
+            background: rgba(167, 139, 250, 0.15);
+            color: #c4b5fd;
+            border: 1px solid rgba(167, 139, 250, 0.3);
+        }
+
+        /* ===== Status timeline / stepper ===== */
+        .order-timeline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.25rem;
+            margin: 1rem 0 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .order-timeline-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            position: relative;
+        }
+        .order-timeline-step .step-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 0.35rem;
+            transition: all 0.2s ease;
+        }
+        .order-timeline-step .step-label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        .order-timeline-step.is-done .step-dot {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+            box-shadow: 0 0 8px var(--success-glow);
+        }
+        .order-timeline-step.is-done .step-label { color: var(--text-primary); font-weight: 600; }
+        .order-timeline-step.is-current .step-dot {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: #fff;
+            box-shadow: 0 0 12px var(--accent-blue-glow);
+            animation: pulse 2s infinite;
+        }
+        .order-timeline-step.is-current .step-label { color: var(--accent-blue); font-weight: 700; }
+        .order-timeline-sep {
+            flex: 0 0 24px;
+            height: 2px;
+            background: var(--border-color);
+            margin-top: -22px;
+        }
+        .order-timeline-sep.is-done { background: var(--success); }
+        @media (max-width: 600px) {
+            .order-timeline { gap: 0.15rem; padding: 0.5rem; }
+            .order-timeline-step { font-size: 0.65rem; }
+            .order-timeline-sep { flex-basis: 12px; }
+        }
+
+        .my-orders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .my-order-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.85rem;
+        }
+        .my-order-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.4rem;
+        }
+        .my-order-head .order-id {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .my-order-meta {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+        .my-order-items {
+            font-size: 0.82rem;
+            color: var(--text-primary);
+            line-height: 1.4;
         }
 
         .order-details {
@@ -2188,8 +2337,18 @@
             <div class="modal-sub">Sign in or create an account to open support tickets.</div>
 
             <div id="acctSignedInBox" style="display:none;">
-                <p style="color: var(--text-primary); margin-bottom: 0.75rem;">Signed in as <strong id="acctSignedInUser"></strong></p>
-                <button class="checkout-btn" onclick="acctLogout()">Sign Out</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem; gap: 0.75rem; flex-wrap: wrap;">
+                    <p style="color: var(--text-primary); margin: 0;">Signed in as <strong id="acctSignedInUser"></strong></p>
+                    <button class="btn btn--ghost btn--sm" onclick="acctLogout()">Sign out</button>
+                </div>
+
+                <h3 style="margin: 0 0 0.5rem; font-size: 1rem;">My Orders</h3>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0 0 0.75rem;">
+                    Orders you place while signed in show up here. Status updates from the owner appear in real time.
+                </p>
+                <div id="myOrdersList" class="my-orders-list">
+                    <div class="empty-state" style="padding: 1rem; font-size: 0.9rem;">No orders yet.</div>
+                </div>
             </div>
 
             <div id="acctSignedOutBox">
@@ -2437,6 +2596,26 @@
                 </div>
 
                 <div class="admin-form" style="margin-top: 1.5rem;">
+                    <h3>New-order Notifications</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">
+                        Get a sound and a desktop popup the moment a customer places an order, even when this tab is in the background. Stored on this device — toggle on every device you want pinged.
+                    </p>
+                    <div style="display:flex; flex-direction: column; gap: 0.6rem;">
+                        <label style="display:flex; align-items:center; gap: 0.6rem; cursor: pointer;">
+                            <input type="checkbox" id="notifySoundToggle" onchange="setNotifyPref('sound', this.checked)">
+                            <span>Play a sound</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap: 0.6rem; cursor: pointer;">
+                            <input type="checkbox" id="notifyDesktopToggle" onchange="setNotifyPref('desktop', this.checked)">
+                            <span>Show a desktop notification <span id="notifyPermLabel" style="color: var(--text-secondary); font-size: 0.85rem;"></span></span>
+                        </label>
+                        <div style="display:flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="btn btn--ghost btn--sm" onclick="testOrderNotification()">Test notification</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-form" style="margin-top: 1.5rem;">
                     <h3>Update Mode</h3>
                     <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">
                         Turn on Update Mode to close the shop to everyone. A full-screen page appears on every device instead of the shop.
@@ -2479,6 +2658,16 @@
                             <input type="number" id="discountPercentInput" placeholder="20" min="1" max="100">
                         </div>
                     </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Expires (optional)</label>
+                            <input type="date" id="discountExpiryInput">
+                        </div>
+                        <div class="form-group">
+                            <label>Max uses (optional)</label>
+                            <input type="number" id="discountMaxUsesInput" placeholder="leave blank for unlimited" min="1">
+                        </div>
+                    </div>
                     <button class="checkout-btn" onclick="saveDiscount()">Add Discount Code</button>
                 </div>
 
@@ -2489,6 +2678,8 @@
                             <tr>
                                 <th>Code</th>
                                 <th>Percent off</th>
+                                <th>Expires</th>
+                                <th>Uses</th>
                                 <th>Created</th>
                                 <th>Actions</th>
                             </tr>
@@ -2574,6 +2765,9 @@
         //   'available'   -> Order's Available (amber)
         //   'not_selling' -> Not Selling Right Now (red) -> blocks cart
         function getItemStatus(item) {
+            // Tracked-amount items that hit zero are auto-flagged as not selling,
+            // regardless of what the owner-set status says.
+            if (item && typeof item.amount === 'number' && item.amount <= 0) return 'not_selling';
             if (item && typeof item.status === 'string') {
                 const s = item.status;
                 if (s === 'selling' || s === 'available' || s === 'not_selling') return s;
@@ -2581,6 +2775,15 @@
             // Back-compat: map legacy boolean.
             if (item && item.inStock === false) return 'not_selling';
             return 'selling';
+        }
+        // How many "units" can still be added to the cart for this item, taking
+        // both stock amount and what's already in the cart into account.
+        // Returns Infinity when amount isn't tracked.
+        function remainingStock(item) {
+            if (!item) return 0;
+            if (typeof item.amount !== 'number' || item.amount < 0) return Infinity;
+            const inCart = (cart.find(c => c.id === item.id) || {}).cartQty || 0;
+            return Math.max(0, item.amount - inCart);
         }
         function statusLabel(s) {
             if (s === 'available') return "Order's Available";
@@ -2635,20 +2838,31 @@
 
             // ORDERS
             onSnapshot(collection(db, 'orders'), snap => {
-                const prevCount = orders.length;
+                // Track previous IDs so we only notify on genuinely new orders,
+                // not on a status change that re-arrives via the same listener.
+                const prevIds = new Set(orders.map(o => String(o && o.id)));
                 orders = snap.docs.map(d => d.data()).sort((a, b) => (b.id || 0) - (a.id || 0));
-                if (!__firstOrdersSnapshot && orders.length > prevCount) {
-                    showNewOrderNotification();
-                    const indicator = document.getElementById('newOrderIndicator');
-                    if (indicator) {
-                        indicator.style.display = 'inline';
-                        setTimeout(() => { indicator.style.display = 'none'; }, 5000);
+                if (!__firstOrdersSnapshot) {
+                    const fresh = orders.filter(o => o && o.id != null && !prevIds.has(String(o.id)));
+                    if (fresh.length > 0) {
+                        // Newest first — use that one for the desktop body text.
+                        showNewOrderNotification(fresh[0]);
+                        const indicator = document.getElementById('newOrderIndicator');
+                        if (indicator) {
+                            indicator.style.display = 'inline';
+                            setTimeout(() => { indicator.style.display = 'none'; }, 5000);
+                        }
                     }
                 }
                 lastOrderCount = orders.length;
                 __firstOrdersSnapshot = false;
                 if (document.getElementById('ownerPanel') && document.getElementById('ownerPanel').classList.contains('active')) {
                     try { renderOrders(); } catch(e) {}
+                }
+                // Customer's "My Orders" view updates live when the owner moves a stage.
+                const acctOverlay = document.getElementById('accountOverlay');
+                if (acctOverlay && acctOverlay.classList.contains('active') && getCurrentUser()) {
+                    try { renderMyOrders(); } catch(e) {}
                 }
             });
 
@@ -2684,7 +2898,8 @@
                 // resync (or drop) the local appliedDiscount so the cart reflects reality.
                 if (appliedDiscount) {
                     const match = __discounts.find(d => (d.code || '').toUpperCase() === appliedDiscount.code);
-                    if (!match) {
+                    const reason = discountUnusableReason(match);
+                    if (reason) {
                         appliedDiscount = null;
                         try { sessionStorage.removeItem('shopAppliedDiscount'); } catch(e) {}
                     } else if (match.percent !== appliedDiscount.percent) {
@@ -2774,6 +2989,27 @@
         }
 
         // Render Items
+        // When an item is currently flagged "New", schedule a single re-render at
+        // the moment its 24h window closes so the ribbon disappears on its own
+        // without needing a page refresh.
+        let __newRibbonTimer = null;
+        function scheduleNewRibbonRefresh() {
+            if (__newRibbonTimer) { clearTimeout(__newRibbonTimer); __newRibbonTimer = null; }
+            const now = Date.now();
+            const DAY = 24 * 60 * 60 * 1000;
+            let soonest = Infinity;
+            (items || []).forEach(it => {
+                const c = Number(it && it.createdAt) || 0;
+                if (c <= 0) return;
+                const remaining = (c + DAY) - now;
+                if (remaining > 0 && remaining < soonest) soonest = remaining;
+            });
+            if (soonest !== Infinity) {
+                __newRibbonTimer = setTimeout(() => {
+                    try { renderItems(); } catch (e) {}
+                }, soonest + 250);
+            }
+        }
         function renderItems() {
             const list = document.getElementById('itemsList');
             list.innerHTML = '';
@@ -2804,7 +3040,13 @@
                 const perPurchaseTag = (!isNaN(perPurchase) && perPurchase > 0)
                     ? `<span class="tag tag-perpurchase">${perPurchase} per purchase</span>`
                     : '';
+                // Show the "NEW" ribbon for 24 hours from item creation. Items without
+                // createdAt (legacy data) never get the ribbon.
+                const createdAt = Number(item.createdAt) || 0;
+                const isNew = createdAt > 0 && (Date.now() - createdAt) < (24 * 60 * 60 * 1000);
+                const newRibbon = isNew ? '<div class="item-new-ribbon">New</div>' : '';
                 div.innerHTML = `
+                    ${newRibbon}
                     <div class="item-info">
                         <div class="item-name">${item.name}</div>
                         <div class="item-tags">
@@ -2834,6 +3076,7 @@
                 `;
                 list.appendChild(div);
             });
+            scheduleNewRibbonRefresh();
         }
 
         function searchItems() {
@@ -2868,7 +3111,16 @@
                 return;
             }
             const qty = parseInt(document.getElementById(`qty-${itemId}`).textContent);
-            
+
+            // If amount is tracked, refuse to over-stuff the cart past what's available.
+            const left = remainingStock(item);
+            if (left !== Infinity && qty > left) {
+                showToast(left === 0
+                    ? 'Out of stock'
+                    : `Only ${left} left — adjust the quantity`);
+                return;
+            }
+
             const existing = cart.find(c => c.id === itemId);
             if (existing) {
                 existing.cartQty += qty;
@@ -3058,7 +3310,8 @@
                     discord: discord,
                     coords: coords,
                     dimension: dimension,
-                    other: other
+                    other: other,
+                    account: getCurrentUser() || null
                 },
                 status: 'pending',
                 totals: {
@@ -3068,10 +3321,31 @@
                 discount: appliedDiscount ? { code: appliedDiscount.code, percent: appliedDiscount.percent } : null
             };
 
-            // Persist to Firestore (broadcasts live to every device via onSnapshot)
+            // Persist to Firestore (broadcasts live to every device via onSnapshot).
+            // Also decrement Amount Available on each item in the same batch so
+            // every device sees stock change in real time.
             if (!fsbReady()) { showToast('Not connected — try again in a moment'); return; }
-            const { db, doc, setDoc } = window.FSB;
-            setDoc(doc(db, 'orders', String(order.id)), order).catch(err => {
+            const { db, doc, setDoc, writeBatch } = window.FSB;
+            const batch = writeBatch(db);
+            batch.set(doc(db, 'orders', String(order.id)), order);
+            order.items.forEach(line => {
+                const live = items.find(it => it.id === line.id);
+                if (!live) return;
+                if (typeof live.amount !== 'number' || live.amount < 0) return; // amount not tracked
+                const next = Math.max(0, live.amount - (Number(line.cartQty) || 0));
+                batch.update(doc(db, 'items', String(live.id)), { amount: next });
+            });
+            // If a discount was used, count the redemption too.
+            if (order.discount && order.discount.code) {
+                const upper = order.discount.code.toUpperCase();
+                const dRef = doc(db, 'discountCodes', upper);
+                const dLive = (__discounts || []).find(d => (d.code || '').toUpperCase() === upper);
+                if (dLive) {
+                    const used = (Number(dLive.uses) || 0) + 1;
+                    batch.update(dRef, { uses: used });
+                }
+            }
+            batch.commit().catch(err => {
                 console.error('placeOrder failed', err);
                 showToast('Could not place order — check connection');
             });
@@ -3117,8 +3391,125 @@
             }, ms);
         }
 
-        function showNewOrderNotification() {
+        // ===== Owner notifications (sound + desktop) =====
+        // Preferences are per-device so each owner browser opts in separately.
+        function getNotifyPrefs() {
+            try {
+                const raw = localStorage.getItem('shopNotifyPrefs');
+                if (!raw) return { sound: false, desktop: false };
+                const v = JSON.parse(raw);
+                return { sound: !!v.sound, desktop: !!v.desktop };
+            } catch (e) { return { sound: false, desktop: false }; }
+        }
+        function saveNotifyPrefs(p) {
+            try { localStorage.setItem('shopNotifyPrefs', JSON.stringify(p || {})); } catch (e) {}
+        }
+        function setNotifyPref(kind, enabled) {
+            const prefs = getNotifyPrefs();
+            prefs[kind] = !!enabled;
+            // Desktop notifications need browser permission. Request it the moment
+            // the owner ticks the box; if it's denied we down-toggle and warn.
+            if (kind === 'desktop' && enabled) {
+                if (!('Notification' in window)) {
+                    showToast('This browser does not support desktop notifications');
+                    prefs.desktop = false;
+                } else if (Notification.permission === 'denied') {
+                    showToast('Desktop notifications are blocked — enable them in your browser settings');
+                    prefs.desktop = false;
+                } else if (Notification.permission !== 'granted') {
+                    Notification.requestPermission().then(perm => {
+                        if (perm !== 'granted') {
+                            const cb = document.getElementById('notifyDesktopToggle');
+                            if (cb) cb.checked = false;
+                            const p2 = getNotifyPrefs();
+                            p2.desktop = false;
+                            saveNotifyPrefs(p2);
+                            showToast('Desktop notifications denied');
+                        }
+                        updateNotifyPermLabel();
+                    });
+                }
+            }
+            saveNotifyPrefs(prefs);
+            updateNotifyPermLabel();
+        }
+        function updateNotifyPermLabel() {
+            const el = document.getElementById('notifyPermLabel');
+            if (!el) return;
+            if (!('Notification' in window)) { el.textContent = '(not supported in this browser)'; return; }
+            const p = Notification.permission;
+            if (p === 'granted') el.textContent = '(allowed)';
+            else if (p === 'denied') el.textContent = '(blocked — change in browser settings)';
+            else el.textContent = '(permission will be requested)';
+        }
+        function syncNotifyTogglesUI() {
+            const prefs = getNotifyPrefs();
+            const s = document.getElementById('notifySoundToggle');
+            const d = document.getElementById('notifyDesktopToggle');
+            if (s) s.checked = prefs.sound;
+            if (d) d.checked = prefs.desktop;
+            updateNotifyPermLabel();
+        }
+        // Lazy-built shared AudioContext (browsers require a user gesture first).
+        let __notifyAudioCtx = null;
+        function playNotifyBeep() {
+            try {
+                const Ctor = window.AudioContext || window.webkitAudioContext;
+                if (!Ctor) return;
+                if (!__notifyAudioCtx) __notifyAudioCtx = new Ctor();
+                const ctx = __notifyAudioCtx;
+                if (ctx.state === 'suspended') { try { ctx.resume(); } catch(e) {} }
+                const now = ctx.currentTime;
+                // Two-note "ding" — pleasant, not jarring.
+                [{ f: 880, t: 0 }, { f: 1320, t: 0.13 }].forEach(({ f, t }) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = f;
+                    gain.gain.setValueAtTime(0.0001, now + t);
+                    gain.gain.exponentialRampToValueAtTime(0.18, now + t + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + t + 0.28);
+                    osc.connect(gain).connect(ctx.destination);
+                    osc.start(now + t);
+                    osc.stop(now + t + 0.32);
+                });
+            } catch (e) { /* audio unavailable — silent fail */ }
+        }
+        function fireDesktopNotification(title, body) {
+            if (!('Notification' in window)) return;
+            if (Notification.permission !== 'granted') return;
+            try {
+                const n = new Notification(title, { body, tag: 'shop-new-order' });
+                n.onclick = () => { try { window.focus(); n.close(); } catch (e) {} };
+                setTimeout(() => { try { n.close(); } catch (e) {} }, 8000);
+            } catch (e) {}
+        }
+        function showNewOrderNotification(order) {
+            // Always show the in-page toast — that's free and works everywhere.
             showToast('New Order Received!', 4000);
+            // Sound + desktop fire only for signed-in owners who opted in.
+            if (!isOwnerLoggedIn()) return;
+            const prefs = getNotifyPrefs();
+            if (prefs.sound) playNotifyBeep();
+            if (prefs.desktop) {
+                const id = (order && order.id != null) ? order.id : '';
+                const cust = (order && order.customer) || {};
+                const who = cust.mcUser || cust.account || cust.discord || 'a customer';
+                const items = Array.isArray(order && order.items) ? order.items : [];
+                const totalQty = items.reduce((sum, i) => sum + (Number(i && i.cartQty) || 0), 0);
+                fireDesktopNotification(
+                    `New order #${id}`,
+                    `${who} ordered ${totalQty} item${totalQty === 1 ? '' : 's'}`
+                );
+            }
+        }
+        function testOrderNotification() {
+            // Mock-order so the existing path runs end-to-end.
+            showNewOrderNotification({
+                id: 'TEST',
+                customer: { mcUser: 'TestPlayer' },
+                items: [{ name: 'Test Item', cartQty: 1 }]
+            });
         }
 
         // Owner Panel
@@ -3191,6 +3582,7 @@
             if (tab === 'items') renderAdminItems();
             if (tab === 'announce') {
                 document.getElementById('announceText').value = __announcement || '';
+                try { syncNotifyTogglesUI(); } catch(e) {}
             }
             if (tab === 'discounts') renderAdminDiscounts();
         }
@@ -3205,12 +3597,66 @@
             renderOrders();
         }
 
+        // ===== Order status timeline =====
+        // Stages a customer order moves through. 'pending' is the initial state
+        // and 'completed' is terminal. Older orders only have pending/completed
+        // — they still render correctly because pending maps to step 0.
+        const ORDER_STAGES = ['pending', 'confirmed', 'delivered', 'completed'];
+        const ORDER_STAGE_LABELS = {
+            pending: 'Pending',
+            confirmed: 'Confirmed',
+            delivered: 'Delivered',
+            completed: 'Completed'
+        };
+        function normalizeStatus(s) {
+            const v = String(s || 'pending').toLowerCase();
+            return ORDER_STAGES.includes(v) ? v : 'pending';
+        }
+        function statusBadgeClass(s) {
+            const n = normalizeStatus(s);
+            if (n === 'completed') return 'status-completed';
+            if (n === 'delivered') return 'status-delivered';
+            if (n === 'confirmed') return 'status-confirmed';
+            return 'status-pending';
+        }
+        function renderOrderTimeline(status) {
+            const idx = ORDER_STAGES.indexOf(normalizeStatus(status));
+            const parts = [];
+            ORDER_STAGES.forEach((stage, i) => {
+                const cls = i < idx ? 'is-done' : (i === idx ? 'is-current' : '');
+                const dotContent = i < idx
+                    ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+                    : String(i + 1);
+                parts.push(`
+                    <div class="order-timeline-step ${cls}">
+                        <div class="step-dot">${dotContent}</div>
+                        <div class="step-label">${ORDER_STAGE_LABELS[stage]}</div>
+                    </div>`);
+                if (i < ORDER_STAGES.length - 1) {
+                    parts.push(`<div class="order-timeline-sep ${i < idx ? 'is-done' : ''}"></div>`);
+                }
+            });
+            return `<div class="order-timeline" aria-label="Order status timeline">${parts.join('')}</div>`;
+        }
+
+        function setOrderStatus(id, newStatus) {
+            const status = normalizeStatus(newStatus);
+            if (!fsbReady()) return;
+            const { db, doc, updateDoc } = window.FSB;
+            const update = { status };
+            if (status === 'completed') update.completedAt = new Date().toLocaleString();
+            else update.completedAt = null;
+            updateDoc(doc(db, 'orders', String(id)), update)
+                .then(() => showToast(`Order moved to ${ORDER_STAGE_LABELS[status]}`))
+                .catch(err => { console.error(err); showToast('Update failed'); });
+        }
+
         function safeOrderCard(order) {
             // Tolerate missing / malformed fields so one bad order can't wipe the list.
             const id = order && order.id != null ? order.id : 'unknown';
             const date = (order && order.date) || '(no date)';
-            const status = (order && order.status) ? String(order.status).toLowerCase() : 'pending';
-            const statusClass = status === 'completed' ? 'status-completed' : 'status-pending';
+            const status = normalizeStatus(order && order.status);
+            const statusClass = statusBadgeClass(status);
             const cust = (order && order.customer) || {};
             const mcUser = cust.mcUser || '(unknown)';
             const discord = cust.discord || '(unknown)';
@@ -3273,18 +3719,23 @@
                 `;
             }
 
-            const ICON_REOPEN = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>';
-            const ICON_CHECK  = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-            const completeBtn = status === 'completed'
-                ? `<button class="btn btn--ghost" onclick="reopenOrder(${JSON.stringify(id)})">${ICON_REOPEN}<span>Reopen</span></button>`
-                : `<button class="btn btn--success" onclick="completeOrder(${JSON.stringify(id)})">${ICON_CHECK}<span>Mark complete</span></button>`;
+            const ICON_BACK   = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+            const ICON_FWD    = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+            const idx = ORDER_STAGES.indexOf(status);
+            const prevStage = idx > 0 ? ORDER_STAGES[idx - 1] : null;
+            const nextStage = idx < ORDER_STAGES.length - 1 ? ORDER_STAGES[idx + 1] : null;
+            const stageButtons = `
+                ${prevStage ? `<button class="btn btn--ghost" onclick="setOrderStatus(${JSON.stringify(id)}, '${prevStage}')">${ICON_BACK}<span>Back to ${ORDER_STAGE_LABELS[prevStage]}</span></button>` : ''}
+                ${nextStage ? `<button class="btn btn--success" onclick="setOrderStatus(${JSON.stringify(id)}, '${nextStage}')">${ICON_FWD}<span>Mark ${ORDER_STAGE_LABELS[nextStage]}</span></button>` : ''}
+            `;
 
             return `
                 <div class="order-card">
                     <div class="order-header">
                         <span class="order-id">Order #${escapeHtml(String(id))}</span>
-                        <span class="order-status ${statusClass}">${status.toUpperCase()}</span>
+                        <span class="order-status ${statusClass}">${ORDER_STAGE_LABELS[status].toUpperCase()}</span>
                     </div>
+                    ${renderOrderTimeline(status)}
                     <div class="order-details">
                         <div class="order-detail-item"><strong>Date</strong>${escapeHtml(date)}</div>
                         <div class="order-detail-item"><strong>MC User</strong>${escapeHtml(mcUser)}</div>
@@ -3300,7 +3751,7 @@
                         ${totalsBlock}
                     </div>
                     <div class="order-actions">
-                        ${completeBtn}
+                        ${stageButtons}
                         <button class="btn btn--danger" onclick="deleteOrder(${JSON.stringify(id)})">
                             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                             <span>Delete</span>
@@ -3410,9 +3861,31 @@
 
         function deleteOrder(id) {
             if (!fsbReady()) return;
-            const { db, doc, deleteDoc } = window.FSB;
-            deleteDoc(doc(db, 'orders', String(id)))
-                .then(() => showToast('Order deleted'))
+            const { db, doc, deleteDoc, writeBatch } = window.FSB;
+            // Restore Amount Available for any tracked items on the order so
+            // canceling an order returns its stock.
+            const order = orders.find(o => String(o.id) === String(id));
+            const batch = writeBatch(db);
+            batch.delete(doc(db, 'orders', String(id)));
+            if (order && Array.isArray(order.items)) {
+                order.items.forEach(line => {
+                    const live = items.find(it => it.id === line.id);
+                    if (!live) return;
+                    if (typeof live.amount !== 'number' || live.amount < 0) return;
+                    const next = (live.amount || 0) + (Number(line.cartQty) || 0);
+                    batch.update(doc(db, 'items', String(live.id)), { amount: next });
+                });
+            }
+            // Refund discount usage if the order had one.
+            if (order && order.discount && order.discount.code) {
+                const upper = order.discount.code.toUpperCase();
+                const dLive = (__discounts || []).find(d => (d.code || '').toUpperCase() === upper);
+                if (dLive && Number(dLive.uses) > 0) {
+                    batch.update(doc(db, 'discountCodes', upper), { uses: Math.max(0, (Number(dLive.uses) || 0) - 1) });
+                }
+            }
+            batch.commit()
+                .then(() => showToast('Order deleted — stock restored'))
                 .catch(err => { console.error(err); showToast('Delete failed'); });
         }
 
@@ -3478,7 +3951,8 @@
                 document.getElementById('cancelBtn').style.display = 'none';
             } else {
                 itemId = Date.now();
-                payload = { id: itemId, name, category, currency, price, quantity, description, status, amount };
+                // createdAt drives the auto-expiring "New" ribbon (24h shelf life).
+                payload = { id: itemId, name, category, currency, price, quantity, description, status, amount, createdAt: Date.now() };
             }
 
             setDoc(doc(db, 'items', String(itemId)), payload)
@@ -3548,6 +4022,8 @@
         function saveDiscount() {
             const codeInput = document.getElementById('discountCodeInput');
             const pctInput = document.getElementById('discountPercentInput');
+            const expiryInput = document.getElementById('discountExpiryInput');
+            const maxUsesInput = document.getElementById('discountMaxUsesInput');
             const code = (codeInput.value || '').trim().toUpperCase().replace(/\s+/g, '');
             const percent = parseInt(pctInput.value);
             if (!code) { showToast('Enter a code'); return; }
@@ -3559,15 +4035,47 @@
                 showToast('Percent must be between 1 and 100');
                 return;
             }
+
+            // Optional limits — both default to "no limit" if blank.
+            let expiresAt = null;
+            const expiryRaw = (expiryInput && expiryInput.value || '').trim();
+            if (expiryRaw) {
+                // Treat the date as end-of-day local time so a code dated today
+                // is valid for the whole day rather than expiring at 00:00.
+                const d = new Date(expiryRaw + 'T23:59:59');
+                if (!isNaN(d.getTime())) expiresAt = d.getTime();
+            }
+            let maxUses = null;
+            const maxRaw = (maxUsesInput && maxUsesInput.value || '').trim();
+            if (maxRaw) {
+                const m = parseInt(maxRaw);
+                if (isNaN(m) || m < 1) {
+                    showToast('Max uses must be 1 or higher');
+                    return;
+                }
+                maxUses = m;
+            }
+
             if (!fsbReady()) { showToast('Not connected — try again in a moment'); return; }
             const { db, doc, setDoc } = window.FSB;
-            setDoc(doc(db, 'discountCodes', code), { code, percent, createdAt: Date.now() })
+            const payload = { code, percent, createdAt: Date.now(), expiresAt, maxUses, uses: 0 };
+            setDoc(doc(db, 'discountCodes', code), payload)
                 .then(() => {
                     showToast('Code saved');
                     codeInput.value = '';
                     pctInput.value = '';
+                    if (expiryInput) expiryInput.value = '';
+                    if (maxUsesInput) maxUsesInput.value = '';
                 })
                 .catch(err => { console.error(err); showToast('Save failed'); });
+        }
+
+        // Returns null if usable, or a short string explaining why it isn't.
+        function discountUnusableReason(d) {
+            if (!d) return 'Invalid code';
+            if (d.expiresAt && Date.now() > Number(d.expiresAt)) return 'Code expired';
+            if (d.maxUses != null && Number(d.uses || 0) >= Number(d.maxUses)) return 'Code has reached its max uses';
+            return null;
         }
 
         function deleteDiscount(code) {
@@ -3582,15 +4090,28 @@
             const tbody = document.getElementById('adminDiscountsList');
             if (!tbody) return;
             if (__discounts.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-secondary); padding: 1.5rem;">No discount codes yet</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--text-secondary); padding: 1.5rem;">No discount codes yet</td></tr>';
                 return;
             }
             tbody.innerHTML = __discounts.map(d => {
                 const created = d.createdAt ? new Date(d.createdAt).toLocaleString() : '—';
+                let expiresCell = '<span style="color: var(--text-secondary);">never</span>';
+                if (d.expiresAt) {
+                    const expDate = new Date(Number(d.expiresAt));
+                    const expired = Date.now() > Number(d.expiresAt);
+                    expiresCell = `<span style="color: ${expired ? 'var(--danger)' : 'var(--text-primary)'};">${expDate.toLocaleDateString()}${expired ? ' (expired)' : ''}</span>`;
+                }
+                const uses = Number(d.uses || 0);
+                const max = d.maxUses != null ? Number(d.maxUses) : null;
+                const usesCell = max != null
+                    ? `<span style="color: ${uses >= max ? 'var(--danger)' : 'var(--text-primary)'};">${uses} / ${max}</span>`
+                    : `<span>${uses}</span>`;
                 return `
                     <tr>
                         <td style="font-weight: 600; letter-spacing: 0.04em;">${d.code}</td>
                         <td>${d.percent}% off</td>
+                        <td style="font-size: 0.85rem;">${expiresCell}</td>
+                        <td style="font-size: 0.85rem;">${usesCell}</td>
                         <td style="color: var(--text-secondary); font-size: 0.85rem;">${created}</td>
                         <td>
                             <button class="btn btn--danger btn--sm" onclick="deleteDiscount('${(d.code || '').replace(/'/g, "\\'")}')" title="Delete code">
@@ -3615,10 +4136,11 @@
                 return;
             }
             const match = findDiscount(raw);
-            if (!match) {
+            const reason = discountUnusableReason(match);
+            if (reason) {
                 if (status) {
                     status.className = 'discount-status discount-status--err';
-                    status.textContent = 'Invalid code';
+                    status.textContent = reason;
                 }
                 appliedDiscount = null;
                 try { sessionStorage.removeItem('shopAppliedDiscount'); } catch(e) {}
@@ -3913,12 +4435,72 @@
                 document.getElementById('acctSignedInUser').textContent = user;
                 document.getElementById('acctSignedInBox').style.display = 'block';
                 document.getElementById('acctSignedOutBox').style.display = 'none';
+                renderMyOrders();
             } else {
                 document.getElementById('acctSignedInBox').style.display = 'none';
                 document.getElementById('acctSignedOutBox').style.display = 'block';
                 switchAcctTab('login');
             }
             document.getElementById('accountOverlay').classList.add('active');
+        }
+
+        // ===== My Orders (customer-facing list of their own orders + live status) =====
+        function renderMyOrders() {
+            const container = document.getElementById('myOrdersList');
+            if (!container) return;
+            const user = getCurrentUser();
+            if (!user) {
+                container.innerHTML = '<div class="empty-state" style="padding: 1rem; font-size: 0.9rem;">Sign in to see your orders.</div>';
+                return;
+            }
+            const userL = user.toLowerCase();
+            const list = (orders || [])
+                .filter(o => {
+                    const acct = o && o.customer && o.customer.account;
+                    if (acct && String(acct).toLowerCase() === userL) return true;
+                    // Back-compat: orders placed before account-tagging — match by mcUser.
+                    const mc = o && o.customer && o.customer.mcUser;
+                    return mc && String(mc).toLowerCase() === userL;
+                })
+                .sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
+
+            if (list.length === 0) {
+                container.innerHTML = '<div class="empty-state" style="padding: 1rem; font-size: 0.9rem;">No orders yet — place your first order from the cart.</div>';
+                return;
+            }
+
+            container.innerHTML = list.map(o => {
+                const id = o && o.id != null ? o.id : '?';
+                const date = (o && o.date) || '';
+                const stage = normalizeStatus(o && o.status);
+                const items = Array.isArray(o && o.items) ? o.items : [];
+                const itemSummary = items.map(i => `${escapeHtml((i && i.name) || '?')} ×${Number(i && i.cartQty) || 0}`).join(', ');
+                const t = o && o.totals;
+                let totalText = '';
+                if (t) {
+                    const parts = [];
+                    if (t.diamonds && t.diamonds.total > 0) parts.push(`${t.diamonds.total} Diamonds`);
+                    if (t.netherite && t.netherite.total > 0) parts.push(`${t.netherite.total} Netherite`);
+                    totalText = parts.join(' + ');
+                }
+                const disc = o && o.discount;
+                const discText = (disc && disc.code)
+                    ? `<div class="my-order-meta" style="color: var(--success);">Discount: ${escapeHtml(disc.code)} (${disc.percent}% off)</div>`
+                    : '';
+                return `
+                    <div class="my-order-card">
+                        <div class="my-order-head">
+                            <span class="order-id">Order #${escapeHtml(String(id))}</span>
+                            <span class="order-status ${statusBadgeClass(stage)}">${ORDER_STAGE_LABELS[stage].toUpperCase()}</span>
+                        </div>
+                        <div class="my-order-meta">${escapeHtml(date)}</div>
+                        ${renderOrderTimeline(stage)}
+                        <div class="my-order-items">${itemSummary || '(no items recorded)'}</div>
+                        ${totalText ? `<div class="my-order-meta" style="margin-top: 0.4rem;"><strong style="color: var(--text-primary);">Total:</strong> ${totalText}</div>` : ''}
+                        ${discText}
+                    </div>
+                `;
+            }).join('');
         }
         function closeAccount() {
             document.getElementById('accountOverlay').classList.remove('active');
