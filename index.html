@@ -1777,54 +1777,7 @@
             animation: pulse 2s infinite;
         }
 
-        /* ===== Floating "Order Status" launcher + side drawer ===== */
-        .order-status-fab {
-            position: fixed;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 90;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.7rem 0.95rem;
-            border: 1px solid var(--border-color);
-            border-right: none;
-            border-radius: 12px 0 0 12px;
-            background: linear-gradient(135deg, rgba(74, 158, 255, 0.18), rgba(167, 139, 250, 0.18));
-            color: var(--text-primary);
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: -4px 6px 20px rgba(0, 0, 0, 0.35);
-            backdrop-filter: blur(8px);
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-        }
-        .order-status-fab:hover {
-            transform: translateY(-50%) translateX(-3px);
-            background: linear-gradient(135deg, rgba(74, 158, 255, 0.28), rgba(167, 139, 250, 0.28));
-            box-shadow: -6px 8px 26px rgba(74, 158, 255, 0.35);
-        }
-        .order-status-fab .icon { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-        .order-status-fab-count {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 20px;
-            height: 20px;
-            padding: 0 6px;
-            border-radius: 999px;
-            background: var(--success);
-            color: #0a0a14;
-            font-size: 0.72rem;
-            font-weight: 800;
-        }
-        @media (max-width: 768px) {
-            .order-status-fab { font-size: 0; padding: 0.7rem; gap: 0; border-radius: 12px 0 0 12px; }
-            .order-status-fab span:not(.order-status-fab-count) { display: none; }
-            .order-status-fab .order-status-fab-count { font-size: 0.7rem; }
-        }
-
+        /* ===== "My orders" side drawer ===== */
         .order-status-overlay {
             position: fixed; inset: 0;
             background: rgba(0, 0, 0, 0.55);
@@ -1852,16 +1805,49 @@
             display: flex; align-items: center; justify-content: space-between;
             gap: 0.5rem; margin-bottom: 0.5rem;
         }
-        .order-status-meta {
-            color: var(--text-secondary);
-            font-size: 0.78rem;
+        .order-status-tabs {
+            display: flex;
+            gap: 0.4rem;
             margin-bottom: 0.85rem;
-            padding: 0.45rem 0.6rem;
-            background: rgba(74, 158, 255, 0.07);
-            border: 1px solid rgba(74, 158, 255, 0.18);
-            border-radius: 6px;
-            line-height: 1.45;
-            word-break: break-all;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .order-status-tab {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.55rem 0.4rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: color 0.18s ease, border-color 0.18s ease;
+        }
+        .order-status-tab:hover { color: var(--text-primary); }
+        .order-status-tab.is-active {
+            color: var(--text-primary);
+            border-bottom-color: var(--primary, #4a9eff);
+        }
+        .order-status-tab-count {
+            min-width: 18px;
+            height: 18px;
+            padding: 0 6px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            font-size: 0.7rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .order-status-tab.is-active .order-status-tab-count {
+            background: var(--success);
+            color: #0a0a14;
         }
         .order-status-body {
             display: flex; flex-direction: column; gap: 0.85rem;
@@ -2257,6 +2243,11 @@
                 <button class="btn btn--ghost" id="accountBtn" onclick="openAccount()" title="Sign in or create an account">
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     <span class="btn-label">Sign in</span>
+                </button>
+                <button class="btn btn--ghost" onclick="toggleOrderStatusPanel()" title="Track your orders">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    <span>My orders</span>
+                    <span class="cart-count" id="orderStatusFabCount" style="display:none;">0</span>
                 </button>
                 <button class="btn btn--primary btn--cart" onclick="toggleCart()" title="View cart">
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
@@ -2781,30 +2772,30 @@
         </div>
     </div>
 
-    <!-- Floating "Order Status" launcher (right edge). Always visible. -->
-    <button class="order-status-fab" id="orderStatusFab" onclick="toggleOrderStatusPanel()" aria-label="Open order status">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M9 11l3 3L22 4"></path>
-            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-        </svg>
-        <span>Order Status</span>
-        <span class="order-status-fab-count" id="orderStatusFabCount" style="display:none;">0</span>
-    </button>
-
-    <!-- Slide-in side drawer showing the visitor's orders, matched by IP + device id -->
+    <!-- Slide-in side drawer showing the visitor's orders. Anonymous tracking
+         resolves which orders belong to this device behind the scenes. -->
     <div class="order-status-overlay" id="orderStatusOverlay" onclick="if(event.target === this) closeOrderStatusPanel()">
-        <aside class="order-status-drawer" role="dialog" aria-label="Order status">
+        <aside class="order-status-drawer" role="dialog" aria-label="My orders">
             <div class="order-status-head">
-                <h3 style="margin: 0; font-size: 1.05rem;">Your order status</h3>
+                <h3 style="margin: 0; font-size: 1.05rem;">My orders</h3>
                 <button class="btn btn--ghost btn--sm" onclick="closeOrderStatusPanel()" aria-label="Close">
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     <span>Close</span>
                 </button>
             </div>
             <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 0 0 0.75rem;">
-                Orders placed from this network or device — no sign-in needed. Status updates appear live.
+                Active orders show their live status. Completed orders move into the history below.
             </p>
-            <div id="orderStatusMeta" class="order-status-meta"></div>
+
+            <div class="order-status-tabs" role="tablist">
+                <button id="orderStatusTabActive" class="order-status-tab is-active" role="tab" onclick="switchOrderStatusTab('active')">
+                    Active <span class="order-status-tab-count" id="orderStatusActiveCount">0</span>
+                </button>
+                <button id="orderStatusTabHistory" class="order-status-tab" role="tab" onclick="switchOrderStatusTab('history')">
+                    Order history <span class="order-status-tab-count" id="orderStatusHistoryCount">0</span>
+                </button>
+            </div>
+
             <div id="orderStatusBody" class="order-status-body">
                 <div class="empty-state" style="padding: 1rem; font-size: 0.9rem;">Loading…</div>
             </div>
@@ -4669,20 +4660,36 @@
             const ov = document.getElementById('orderStatusOverlay');
             if (ov) ov.classList.remove('active');
         }
+        // Active = anything not yet completed. History = completed orders.
+        let __orderStatusTab = 'active';
+        function switchOrderStatusTab(tab) {
+            __orderStatusTab = (tab === 'history') ? 'history' : 'active';
+            const a = document.getElementById('orderStatusTabActive');
+            const h = document.getElementById('orderStatusTabHistory');
+            if (a) a.classList.toggle('is-active', __orderStatusTab === 'active');
+            if (h) h.classList.toggle('is-active', __orderStatusTab === 'history');
+            renderOrderStatusPanel();
+        }
         function renderOrderStatusPanel() {
-            const meta = document.getElementById('orderStatusMeta');
             const body = document.getElementById('orderStatusBody');
-            if (!meta || !body) return;
-            const ip = getCachedIp();
-            meta.innerHTML = ip
-                ? `Matching by IP <strong style="color: var(--text-primary);">${escapeHtml(ip)}</strong> and this device.`
-                : `Could not detect your IP — matching by this device only.`;
-            const list = getVisitorOrders();
-            if (list.length === 0) {
-                body.innerHTML = `<div class="empty-state" style="padding: 1rem; font-size: 0.9rem;">No orders found from this network or device yet. After you place an order it'll show up here automatically.</div>`;
+            if (!body) return;
+            const all = getVisitorOrders();
+            const active = all.filter(o => normalizeStatus(o && o.status) !== 'completed');
+            const history = all.filter(o => normalizeStatus(o && o.status) === 'completed');
+            const aCount = document.getElementById('orderStatusActiveCount');
+            const hCount = document.getElementById('orderStatusHistoryCount');
+            if (aCount) aCount.textContent = String(active.length);
+            if (hCount) hCount.textContent = String(history.length);
+
+            const showing = __orderStatusTab === 'history' ? history : active;
+            if (showing.length === 0) {
+                const msg = __orderStatusTab === 'history'
+                    ? 'No completed orders yet. Once an order is finished it will appear here.'
+                    : 'No active orders yet. After you place an order it will appear here automatically.';
+                body.innerHTML = `<div class="empty-state" style="padding: 1rem; font-size: 0.9rem;">${msg}</div>`;
                 return;
             }
-            body.innerHTML = list.map(o => {
+            body.innerHTML = showing.map(o => {
                 const id = o && o.id != null ? o.id : '?';
                 const date = (o && o.date) || '';
                 const stage = normalizeStatus(o && o.status);
