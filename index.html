@@ -2890,370 +2890,7 @@
     </div>
 
     <!-- Owner Panel -->
-    <div class="owner-panel" id="ownerPanel">
-        <div class="panel-header">
-            <h2>Owner's Command Center</h2>
-            <button onclick="logout()" style="background: linear-gradient(135deg, var(--danger), #da3633); border: none; color: white; padding: 0.625rem 1.25rem; font-family: inherit; cursor: pointer; border-radius: 6px; font-size: 0.875rem; font-weight: 500; box-shadow: 0 0 10px var(--danger-glow);">Logout</button>
-        </div>
-        
-        <div class="panel-nav">
-            <button class="panel-tab active" onclick="switchPanel('orders')">Orders</button>
-            <button class="panel-tab" onclick="switchPanel('items')">Manage Items</button>
-            <button class="panel-tab" onclick="switchPanel('dashboard')">Dashboard</button>
-            <button class="panel-tab" onclick="switchPanel('announce')">Announcements</button>
-            <button class="panel-tab" onclick="switchPanel('discounts')">Discounts</button>
-            <button class="panel-tab" onclick="switchPanel('reviews')">Reviews</button>
-            <button class="panel-tab" onclick="switchPanel('bans')">Bans</button>
-            <button class="panel-tab" onclick="switchPanel('tickets')">Tickets <span id="ownerTicketBadge" class="owner-ticket-badge" style="display:none;">0</span></button>
-        </div>
-
-        <div class="panel-content">
-            <!-- Orders Section -->
-            <div class="panel-section active" id="panel-orders" data-filter="all">
-                <h2 style="margin-bottom: 1rem; font-size: 1.25rem;">Incoming Orders <span id="newOrderIndicator" style="display: none; color: var(--success); font-size: 0.875rem; margin-left: 0.5rem;">● New!</span></h2>
-                <div class="orders-toolbar">
-                    <div class="toolbar-left">
-                        <button class="btn btn--primary" onclick="renderOrders()">
-                            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                            <span>Refresh</span>
-                        </button>
-                        <span class="toolbar-separator" aria-hidden="true"></span>
-                        <div class="filter-pills" id="orderFilterPills" role="tablist" aria-label="Filter orders by status">
-                            <button class="filter-pill active" data-filter="all" onclick="setOrderFilter('all')">All</button>
-                            <button class="filter-pill" data-filter="pending" onclick="setOrderFilter('pending')">Pending</button>
-                            <button class="filter-pill" data-filter="completed" onclick="setOrderFilter('completed')">Completed</button>
-                        </div>
-                    </div>
-                    <div class="toolbar-right">
-                        <span class="orders-count" id="ordersCount">0 orders</span>
-                    </div>
-                </div>
-                <div id="ordersDiag" class="orders-diag" style="display:none;"></div>
-                <div id="ordersList"></div>
-            </div>
-
-            <!-- Items Management -->
-            <div class="panel-section" id="panel-items">
-                <div class="admin-form">
-                    <h3 id="formTitle">Add New Item</h3>
-                    <input type="hidden" id="editItemId">
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Item Name *</label>
-                            <input type="text" id="itemName" placeholder="Diamond Sword...">
-                        </div>
-                        <div class="form-group">
-                            <label>Category *</label>
-                            <select id="itemCategory">
-                                <option>Building Blocks</option>
-                                <option>Wood & Natural</option>
-                                <option>Nether</option>
-                                <option>Special Blocks</option>
-                                <option>Mob Drops</option>
-                                <option>Redstone & Utility</option>
-                                <option>Food & Farming</option>
-                                <option>Premium Items</option>
-                                <option>Gear & Enchants</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Currency Type *</label>
-                        <div class="currency-select">
-                            <div class="currency-option selected" onclick="selectCurrency('diamonds')" id="curr-diamonds">
-                                <span class="currency-label">💎 Diamonds</span>
-                                <span class="currency-desc">Standard currency</span>
-                            </div>
-                            <div class="currency-option" onclick="selectCurrency('netherite')" id="curr-netherite">
-                                <span class="currency-label">⚫ Netherite Ingots</span>
-                                <span class="currency-desc">Premium currency</span>
-                            </div>
-                        </div>
-                        <input type="hidden" id="itemCurrency" value="diamonds">
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Price *</label>
-                            <input type="number" id="itemPrice" placeholder="10" min="1">
-                        </div>
-                        <div class="form-group">
-                            <label>Quantity Per Purchase *</label>
-                            <input type="number" id="itemQty" placeholder="64 (1 stack)" min="1">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Amount Available</label>
-                        <input type="number" id="itemAmount" placeholder="How many you have in stock (e.g. 12)" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="itemDesc" rows="2" placeholder="Item description..."></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Stock Status *</label>
-                        <select id="itemStock">
-                            <option value="selling">Selling</option>
-                            <option value="available">Order's Available</option>
-                            <option value="not_selling">Not Selling Right Now</option>
-                        </select>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding-top: 0.5rem;">
-                                <input type="checkbox" id="itemFeatured" style="width:auto; margin:0;">
-                                <span>Featured (★ pin to top of shop)</span>
-                            </label>
-                        </div>
-                        <div class="form-group">
-                            <label>Restock ETA (optional)</label>
-                            <input type="date" id="itemRestockEta" title="Show a 'Restock soon' badge with this date">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Bundle contents (optional — one item per line, e.g. "1x Elytra")</label>
-                        <textarea id="itemBundle" rows="3" placeholder="Leave blank for normal items.&#10;1x Elytra&#10;64x Fireworks&#10;1x Mending Book"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Low-stock alert threshold (optional)</label>
-                        <input type="number" id="itemLowStock" min="0" placeholder="e.g. 3 — you'll get a toast when amount drops at or below this">
-                    </div>
-                    <button class="checkout-btn" onclick="saveItem()" id="saveBtn">Add Item</button>
-                    <button class="checkout-btn" onclick="cancelEdit()" id="cancelBtn" style="display:none; background: var(--bg-secondary); color: var(--text-primary); margin-top: 0.5rem;">Cancel Edit</button>
-                </div>
-
-                <h3 style="margin: 2rem 0 1rem; font-size: 1.125rem;">Current Inventory</h3>
-                <div style="overflow-x: auto;">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Category</th>
-                                <th>Price</th>
-                                <th>Qty</th>
-                                <th>Amount</th>
-                                <th>Stock</th>
-                                <th>Featured</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminItemsList"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Tickets Section -->
-            <div class="panel-section" id="panel-tickets">
-                <h2 style="margin-bottom: 1rem; font-size: 1.25rem;">Support Tickets</h2>
-                <div class="orders-toolbar">
-                    <div class="toolbar-left">
-                        <button class="btn btn--primary" onclick="renderOwnerTickets()">
-                            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                            <span>Refresh</span>
-                        </button>
-                    </div>
-                    <div class="toolbar-right">
-                        <span class="orders-count" id="ticketsCount">0 tickets</span>
-                    </div>
-                </div>
-                <div id="ownerTicketsList"></div>
-            </div>
-
-            <!-- Announcements -->
-            <div class="panel-section" id="panel-announce">
-                <div class="admin-form">
-                    <h3>Update Announcement</h3>
-                    <div class="form-group">
-                        <label>Announcement Text (leave blank and Save to hide the bar)</label>
-                        <textarea id="announceText" rows="3" placeholder="Enter announcement..."></textarea>
-                    </div>
-                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-                        <button class="checkout-btn" onclick="updateAnnouncement()">Save Announcement</button>
-                        <button class="btn-secondary" onclick="clearAnnouncement()">Clear Announcement</button>
-                    </div>
-                </div>
-
-                <div class="admin-form" style="margin-top: 1.5rem;">
-                    <h3>New-order Notifications</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">
-                        Get a sound and a desktop popup the moment a customer places an order, even when this tab is in the background. Stored on this device — toggle on every device you want pinged.
-                    </p>
-                    <div style="display:flex; flex-direction: column; gap: 0.6rem;">
-                        <label style="display:flex; align-items:center; gap: 0.6rem; cursor: pointer;">
-                            <input type="checkbox" id="notifySoundToggle" onchange="setNotifyPref('sound', this.checked)">
-                            <span>Play a sound</span>
-                        </label>
-                        <label style="display:flex; align-items:center; gap: 0.6rem; cursor: pointer;">
-                            <input type="checkbox" id="notifyDesktopToggle" onchange="setNotifyPref('desktop', this.checked)">
-                            <span>Show a desktop notification <span id="notifyPermLabel" style="color: var(--text-secondary); font-size: 0.85rem;"></span></span>
-                        </label>
-                        <div style="display:flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <button class="btn btn--ghost btn--sm" onclick="testOrderNotification()">Test notification</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="admin-form" style="margin-top: 1.5rem;">
-                    <h3>Update Mode</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">
-                        Turn on Update Mode to close the shop to everyone. A full-screen page appears on every device instead of the shop.
-                        Staff can still access the shop by typing the unlock code at the bottom of the update page, or by opening the Owner Panel.
-                    </p>
-                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-                        <button id="maintenanceToggleBtn" class="btn btn--primary" onclick="toggleMaintenance()">Loading…</button>
-                        <span id="maintenanceStatus" style="color: var(--text-secondary); font-size: 0.875rem;"></span>
-                    </div>
-                    <div style="margin-top: 1rem; display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;">
-                        <div class="form-group" style="flex: 1; min-width: 220px; margin-bottom: 0;">
-                            <label>Estimated back-online time (optional)</label>
-                            <input type="datetime-local" id="maintenanceEtaInput" title="Customers will see a live countdown to this time">
-                        </div>
-                        <button class="btn btn--primary btn--sm" onclick="saveMaintenanceEta()">Save ETA</button>
-                        <button class="btn btn--ghost btn--sm" onclick="clearMaintenanceEta()">Clear ETA</button>
-                    </div>
-                    <p style="color: var(--text-secondary); font-size: 0.78rem; margin-top: 0.4rem;">
-                        If set, customers see a live "Back online in HH:MM:SS" countdown on the Update Mode page. Leave blank to hide it.
-                    </p>
-                </div>
-
-                <div class="admin-form" style="margin-top: 1.5rem;">
-                    <h3>Backup & Restore</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">
-                        Orders, items, accounts, tickets, and announcements are synced through your cloud database.
-                        Export saves a snapshot of everything to a JSON file you can keep as a backup. Import overwrites the cloud data with that file.
-                    </p>
-                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-                        <button class="checkout-btn" onclick="exportData()">Export Data</button>
-                        <button class="btn-secondary" onclick="document.getElementById('importFileInput').click()">Import Data</button>
-                        <input type="file" id="importFileInput" accept="application/json" style="display:none;" onchange="importData(this)">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Discounts Section -->
-            <div class="panel-section" id="panel-discounts">
-                <div class="admin-form">
-                    <h3>Create Discount Code</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">
-                        Codes are case-insensitive and synced across every device. Customers enter the code in the cart to take a percentage off their total.
-                    </p>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Code *</label>
-                            <input type="text" id="discountCodeInput" placeholder="SUMMER20" maxlength="32">
-                        </div>
-                        <div class="form-group">
-                            <label>Percent off * (1–100)</label>
-                            <input type="number" id="discountPercentInput" placeholder="20" min="1" max="100">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Expires (optional)</label>
-                            <input type="date" id="discountExpiryInput">
-                        </div>
-                        <div class="form-group">
-                            <label>Max uses (optional)</label>
-                            <input type="number" id="discountMaxUsesInput" placeholder="leave blank for unlimited" min="1">
-                        </div>
-                    </div>
-                    <button class="checkout-btn" onclick="saveDiscount()">Add Discount Code</button>
-                </div>
-
-                <h3 style="margin: 2rem 0 1rem; font-size: 1.125rem;">Active Codes</h3>
-                <div style="overflow-x: auto;">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Code</th>
-                                <th>Percent off</th>
-                                <th>Expires</th>
-                                <th>Uses</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminDiscountsList"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Reviews Section -->
-            <div class="panel-section" id="panel-reviews">
-                <h2 style="margin-bottom: 0.5rem; font-size: 1.25rem;">Customer Reviews</h2>
-                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
-                    Customers can leave a star rating + short comment after their order is marked Completed. Use the Hide button to remove anything inappropriate from public view.
-                </p>
-                <div id="adminReviewsList"></div>
-            </div>
-
-            <!-- Bans Section -->
-            <div class="panel-section" id="panel-bans">
-                <div class="admin-form">
-                    <h3>Ban or Warn an account</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">
-                        <strong style="color:var(--danger)">Ban</strong> blocks the account from placing orders, creating that username, or signing in. <strong style="color:var(--warning)">Warn</strong> still lets them order but shows a warning toast every visit. Usernames are case-insensitive (so <code>SteveX</code> and <code>stevex</code> are treated the same).
-                    </p>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Account / username *</label>
-                            <input type="text" id="banAccountInput" placeholder="e.g. SteveX" maxlength="64">
-                        </div>
-                        <div class="form-group">
-                            <label>Action *</label>
-                            <select id="banActionInput">
-                                <option value="ban">Ban (block from ordering / signin)</option>
-                                <option value="warn">Warn (show warning toast)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Reason (optional, only shown to you)</label>
-                        <input type="text" id="banReasonInput" placeholder="scammed customer / chargeback / spam">
-                    </div>
-                    <button class="checkout-btn" onclick="saveBan()">Add to list</button>
-                </div>
-                <h3 style="margin: 2rem 0 1rem; font-size: 1.125rem;">Active list</h3>
-                <div style="overflow-x: auto;">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Account</th>
-                                <th>Action</th>
-                                <th>Reason</th>
-                                <th>Added</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminBansList"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Dashboard Section -->
-            <div class="panel-section" id="panel-dashboard">
-                <h2 style="margin-bottom: 1rem; font-size: 1.25rem;">Sales Dashboard</h2>
-                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
-                    Live numbers from completed orders. Updates instantly when you mark orders complete.
-                </p>
-                <div class="dashboard-grid" id="dashboardGrid"></div>
-                <div class="dashboard-section">
-                    <h3>Top selling items</h3>
-                    <div id="dashboardTopItems"></div>
-                </div>
-                <div class="dashboard-section">
-                    <h3>Recent activity</h3>
-                    <div id="dashboardRecent"></div>
-                </div>
-                <button class="btn btn--ghost btn--sm" onclick="renderDashboard()">
-                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                    <span>Refresh</span>
-                </button>
-            </div>
-        </div>
-    </div>
+    <div class="owner-panel" id="ownerPanel"></div>
 
     <!-- Slide-in side drawer showing the visitor's orders. Anonymous tracking
          resolves which orders belong to this device behind the scenes. -->
@@ -3348,17 +2985,28 @@
         // that 99% of curious kids give up. The owner is exempt as long as they
         // are signed in (cleared by the footer "Kick All Owners" button, which
         // wipes the flag globally via Firestore).
-        // Pre-computed owner-session token. The doLogin function stores this
-        // exact string in localStorage on a successful 3-field login, and
-        // every owner check compares against it. Setting the localStorage
-        // flag manually to '1' or 'true' no longer works — you have to know
-        // (or brute-force) the actual token, which is derived from the
-        // hashed credentials.
-        const _OTH = ['y2x8e7', '3c6ol5'].join(':');
+        // Owner-session token verification. The actual token string is NEVER
+        // present anywhere in the source — only the hash-of-the-correct-token
+        // is stored, and the runtime token itself is derived from the typed
+        // credentials at login time. To forge a session, an attacker would
+        // have to either brute-force the credential preimages or brute-force
+        // the token preimage of _OTH_HASH (both hash-preimage attacks).
+        const _TSL_IN  = ['tk', 'n_v2'].join('');
+        const _TSL_OUT = ['sh', 't_v3'].join('');
+        const _OTH_HASH = ['ybamgg', '1m23k3u'].join(':');
+
+        function _verifyOwnerToken(tok) {
+            if (!tok) return false;
+            try { return _hk(tok, _TSL_OUT) === _OTH_HASH; }
+            catch (e) { return false; }
+        }
+        function _computeOwnerToken(u, p, v) {
+            return _hk(String(u || '') + ':' + String(p || '') + ':' + String(v || ''), _TSL_IN);
+        }
 
         (function () {
             function ownerExempt() {
-                try { return localStorage.getItem('shopOwnerToken') === _OTH; }
+                try { return _verifyOwnerToken(localStorage.getItem('shopOwnerToken')); }
                 catch (e) { return false; }
             }
 
@@ -4399,7 +4047,11 @@
                     // Owner session is gated by a hashed token, NOT a plain '1' flag.
                     // Setting localStorage manually no longer grants owner access —
                     // the only way to mint this token is to pass the 3-field login.
-                    localStorage.setItem('shopOwnerToken', _OTH);
+                    // Token is derived from the typed credentials and the inner
+                    // salt. Verifier hashes this with the outer salt and compares
+                    // to _OTH_HASH. Storing this in localStorage manually requires
+                    // either brute-forcing the cred preimages or the token preimage.
+                    localStorage.setItem('shopOwnerToken', _computeOwnerToken(user, pass, verify));
                     localStorage.removeItem('shopOwnerLoggedIn'); // legacy key, no longer used
                     // Stamp the moment of this login. Any kick that lands AFTER
                     // this stamp (kickedAt > loginAt) will sign this session out.
@@ -4444,14 +4096,15 @@
         }
 
         function isOwnerLoggedIn() {
-            try { return localStorage.getItem('shopOwnerToken') === _OTH; } catch (e) { return false; }
+            try { return _verifyOwnerToken(localStorage.getItem('shopOwnerToken')); }
+            catch (e) { return false; }
         }
 
         function restoreOwnerSession() {
             // Sweep up any legacy/forged owner flags without showing a popup.
             // A real owner session is ONLY proven by a matching hashed token.
             try {
-                if (localStorage.getItem('shopOwnerToken') !== _OTH) {
+                if (!_verifyOwnerToken(localStorage.getItem('shopOwnerToken'))) {
                     localStorage.removeItem('shopOwnerToken');
                     localStorage.removeItem('shopOwnerLoggedIn');
                     localStorage.removeItem('shopOwnerLoginAt');
@@ -4471,23 +4124,398 @@
         }
 
         // ===== Owner-panel DOM-tampering defense =====
-        // Anyone with DevTools (built-in, mobile, hosted, browser-menu Inspect)
-        // can manually add class="active" to <div id="ownerPanel"> and reveal
-        // the panel without logging in. To kill that bypass we:
-        //   1. Stash the panel's inner HTML on first paint and EMPTY the panel
-        //      whenever the visitor is not the owner. A class flip then just
-        //      reveals an empty <div>.
-        //   2. Watch the panel with a MutationObserver. Any time the class /
-        //      style / children are tampered with by a non-owner, we strip it.
-        //   3. Belt-and-suspenders interval poll catches any case the observer
-        //      could miss (rare, but free).
-        let __ownerPanelHTML = '';
+        // The owner panel HTML is NOT in the page source — it's stored as a
+        // chunked base64 blob below and only decoded + injected after a real
+        // owner session is proven (via _verifyOwnerToken). View-source / curl
+        // / DOM inspection on a non-owner visit reveals an empty <div>.
+        // A MutationObserver + interval poll defends against DevTools tampering:
+        // any class / style / child mutation by a non-owner is reverted.
+        const __OPC = [
+            "ICAgICAgICA8ZGl2IGNsYXNzPSJwYW5lbC1oZWFkZXIiPgogICAgICAgICAgICA8aDI+T3duZXIncyBD",
+            "b21tYW5kIENlbnRlcjwvaDI+CiAgICAgICAgICAgIDxidXR0b24gb25jbGljaz0ibG9nb3V0KCkiIHN0",
+            "eWxlPSJiYWNrZ3JvdW5kOiBsaW5lYXItZ3JhZGllbnQoMTM1ZGVnLCB2YXIoLS1kYW5nZXIpLCAjZGEz",
+            "NjMzKTsgYm9yZGVyOiBub25lOyBjb2xvcjogd2hpdGU7IHBhZGRpbmc6IDAuNjI1cmVtIDEuMjVyZW07",
+            "IGZvbnQtZmFtaWx5OiBpbmhlcml0OyBjdXJzb3I6IHBvaW50ZXI7IGJvcmRlci1yYWRpdXM6IDZweDsg",
+            "Zm9udC1zaXplOiAwLjg3NXJlbTsgZm9udC13ZWlnaHQ6IDUwMDsgYm94LXNoYWRvdzogMCAwIDEwcHgg",
+            "dmFyKC0tZGFuZ2VyLWdsb3cpOyI+TG9nb3V0PC9idXR0b24+CiAgICAgICAgPC9kaXY+CiAgICAgICAg",
+            "CiAgICAgICAgPGRpdiBjbGFzcz0icGFuZWwtbmF2Ij4KICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz0i",
+            "cGFuZWwtdGFiIGFjdGl2ZSIgb25jbGljaz0ic3dpdGNoUGFuZWwoJ29yZGVycycpIj5PcmRlcnM8L2J1",
+            "dHRvbj4KICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz0icGFuZWwtdGFiIiBvbmNsaWNrPSJzd2l0Y2hQ",
+            "YW5lbCgnaXRlbXMnKSI+TWFuYWdlIEl0ZW1zPC9idXR0b24+CiAgICAgICAgICAgIDxidXR0b24gY2xh",
+            "c3M9InBhbmVsLXRhYiIgb25jbGljaz0ic3dpdGNoUGFuZWwoJ2Rhc2hib2FyZCcpIj5EYXNoYm9hcmQ8",
+            "L2J1dHRvbj4KICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz0icGFuZWwtdGFiIiBvbmNsaWNrPSJzd2l0",
+            "Y2hQYW5lbCgnYW5ub3VuY2UnKSI+QW5ub3VuY2VtZW50czwvYnV0dG9uPgogICAgICAgICAgICA8YnV0",
+            "dG9uIGNsYXNzPSJwYW5lbC10YWIiIG9uY2xpY2s9InN3aXRjaFBhbmVsKCdkaXNjb3VudHMnKSI+RGlz",
+            "Y291bnRzPC9idXR0b24+CiAgICAgICAgICAgIDxidXR0b24gY2xhc3M9InBhbmVsLXRhYiIgb25jbGlj",
+            "az0ic3dpdGNoUGFuZWwoJ3Jldmlld3MnKSI+UmV2aWV3czwvYnV0dG9uPgogICAgICAgICAgICA8YnV0",
+            "dG9uIGNsYXNzPSJwYW5lbC10YWIiIG9uY2xpY2s9InN3aXRjaFBhbmVsKCdiYW5zJykiPkJhbnM8L2J1",
+            "dHRvbj4KICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz0icGFuZWwtdGFiIiBvbmNsaWNrPSJzd2l0Y2hQ",
+            "YW5lbCgndGlja2V0cycpIj5UaWNrZXRzIDxzcGFuIGlkPSJvd25lclRpY2tldEJhZGdlIiBjbGFzcz0i",
+            "b3duZXItdGlja2V0LWJhZGdlIiBzdHlsZT0iZGlzcGxheTpub25lOyI+MDwvc3Bhbj48L2J1dHRvbj4K",
+            "ICAgICAgICA8L2Rpdj4KCiAgICAgICAgPGRpdiBjbGFzcz0icGFuZWwtY29udGVudCI+CiAgICAgICAg",
+            "ICAgIDwhLS0gT3JkZXJzIFNlY3Rpb24gLS0+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9InBhbmVsLXNl",
+            "Y3Rpb24gYWN0aXZlIiBpZD0icGFuZWwtb3JkZXJzIiBkYXRhLWZpbHRlcj0iYWxsIj4KICAgICAgICAg",
+            "ICAgICAgIDxoMiBzdHlsZT0ibWFyZ2luLWJvdHRvbTogMXJlbTsgZm9udC1zaXplOiAxLjI1cmVtOyI+",
+            "SW5jb21pbmcgT3JkZXJzIDxzcGFuIGlkPSJuZXdPcmRlckluZGljYXRvciIgc3R5bGU9ImRpc3BsYXk6",
+            "IG5vbmU7IGNvbG9yOiB2YXIoLS1zdWNjZXNzKTsgZm9udC1zaXplOiAwLjg3NXJlbTsgbWFyZ2luLWxl",
+            "ZnQ6IDAuNXJlbTsiPuKXjyBOZXchPC9zcGFuPjwvaDI+CiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNz",
+            "PSJvcmRlcnMtdG9vbGJhciI+CiAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0idG9vbGJhci1s",
+            "ZWZ0Ij4KICAgICAgICAgICAgICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi0tcHJpbWFy",
+            "eSIgb25jbGljaz0icmVuZGVyT3JkZXJzKCkiPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPHN2",
+            "ZyBjbGFzcz0iaWNvbiIgdmlld0JveD0iMCAwIDI0IDI0IiBhcmlhLWhpZGRlbj0idHJ1ZSI+PHBvbHls",
+            "aW5lIHBvaW50cz0iMjMgNCAyMyAxMCAxNyAxMCI+PC9wb2x5bGluZT48cGF0aCBkPSJNMjAuNDkgMTVh",
+            "OSA5IDAgMSAxLTIuMTItOS4zNkwyMyAxMCI+PC9wYXRoPjwvc3ZnPgogICAgICAgICAgICAgICAgICAg",
+            "ICAgICAgICAgPHNwYW4+UmVmcmVzaDwvc3Bhbj4KICAgICAgICAgICAgICAgICAgICAgICAgPC9idXR0",
+            "b24+CiAgICAgICAgICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzPSJ0b29sYmFyLXNlcGFyYXRvciIg",
+            "YXJpYS1oaWRkZW49InRydWUiPjwvc3Bhbj4KICAgICAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFz",
+            "cz0iZmlsdGVyLXBpbGxzIiBpZD0ib3JkZXJGaWx0ZXJQaWxscyIgcm9sZT0idGFibGlzdCIgYXJpYS1s",
+            "YWJlbD0iRmlsdGVyIG9yZGVycyBieSBzdGF0dXMiPgogICAgICAgICAgICAgICAgICAgICAgICAgICAg",
+            "PGJ1dHRvbiBjbGFzcz0iZmlsdGVyLXBpbGwgYWN0aXZlIiBkYXRhLWZpbHRlcj0iYWxsIiBvbmNsaWNr",
+            "PSJzZXRPcmRlckZpbHRlcignYWxsJykiPkFsbDwvYnV0dG9uPgogICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgICAgPGJ1dHRvbiBjbGFzcz0iZmlsdGVyLXBpbGwiIGRhdGEtZmlsdGVyPSJwZW5kaW5nIiBvbmNs",
+            "aWNrPSJzZXRPcmRlckZpbHRlcigncGVuZGluZycpIj5QZW5kaW5nPC9idXR0b24+CiAgICAgICAgICAg",
+            "ICAgICAgICAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJmaWx0ZXItcGlsbCIgZGF0YS1maWx0ZXI9ImNv",
+            "bXBsZXRlZCIgb25jbGljaz0ic2V0T3JkZXJGaWx0ZXIoJ2NvbXBsZXRlZCcpIj5Db21wbGV0ZWQ8L2J1",
+            "dHRvbj4KICAgICAgICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPC9k",
+            "aXY+CiAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0idG9vbGJhci1yaWdodCI+CiAgICAgICAg",
+            "ICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzPSJvcmRlcnMtY291bnQiIGlkPSJvcmRlcnNDb3VudCI+",
+            "MCBvcmRlcnM8L3NwYW4+CiAgICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICA8",
+            "L2Rpdj4KICAgICAgICAgICAgICAgIDxkaXYgaWQ9Im9yZGVyc0RpYWciIGNsYXNzPSJvcmRlcnMtZGlh",
+            "ZyIgc3R5bGU9ImRpc3BsYXk6bm9uZTsiPjwvZGl2PgogICAgICAgICAgICAgICAgPGRpdiBpZD0ib3Jk",
+            "ZXJzTGlzdCI+PC9kaXY+CiAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgPCEtLSBJdGVtcyBN",
+            "YW5hZ2VtZW50IC0tPgogICAgICAgICAgICA8ZGl2IGNsYXNzPSJwYW5lbC1zZWN0aW9uIiBpZD0icGFu",
+            "ZWwtaXRlbXMiPgogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iYWRtaW4tZm9ybSI+CiAgICAgICAg",
+            "ICAgICAgICAgICAgPGgzIGlkPSJmb3JtVGl0bGUiPkFkZCBOZXcgSXRlbTwvaDM+CiAgICAgICAgICAg",
+            "ICAgICAgICAgPGlucHV0IHR5cGU9ImhpZGRlbiIgaWQ9ImVkaXRJdGVtSWQiPgogICAgICAgICAgICAg",
+            "ICAgICAgIAogICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tcm93Ij4KICAgICAgICAg",
+            "ICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iZm9ybS1ncm91cCI+CiAgICAgICAgICAgICAgICAgICAg",
+            "ICAgICAgICA8bGFiZWw+SXRlbSBOYW1lICo8L2xhYmVsPgogICAgICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgPGlucHV0IHR5cGU9InRleHQiIGlkPSJpdGVtTmFtZSIgcGxhY2Vob2xkZXI9IkRpYW1vbmQgU3dv",
+            "cmQuLi4iPgogICAgICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgPGRpdiBjbGFzcz0iZm9ybS1ncm91cCI+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8bGFi",
+            "ZWw+Q2F0ZWdvcnkgKjwvbGFiZWw+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8c2VsZWN0IGlk",
+            "PSJpdGVtQ2F0ZWdvcnkiPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxvcHRpb24+QnVp",
+            "bGRpbmcgQmxvY2tzPC9vcHRpb24+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPG9wdGlv",
+            "bj5Xb29kICYgTmF0dXJhbDwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxv",
+            "cHRpb24+TmV0aGVyPC9vcHRpb24+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPG9wdGlv",
+            "bj5TcGVjaWFsIEJsb2Nrczwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxv",
+            "cHRpb24+TW9iIERyb3BzPC9vcHRpb24+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPG9w",
+            "dGlvbj5SZWRzdG9uZSAmIFV0aWxpdHk8L29wdGlvbj4KICAgICAgICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgICA8b3B0aW9uPkZvb2QgJiBGYXJtaW5nPC9vcHRpb24+CiAgICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgICAgICAgPG9wdGlvbj5QcmVtaXVtIEl0ZW1zPC9vcHRpb24+CiAgICAgICAgICAgICAgICAgICAg",
+            "ICAgICAgICAgICAgPG9wdGlvbj5HZWFyICYgRW5jaGFudHM8L29wdGlvbj4KICAgICAgICAgICAgICAg",
+            "ICAgICAgICAgICAgIDwvc2VsZWN0PgogICAgICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAg",
+            "ICAgICAgICAgICAgICA8L2Rpdj4KCiAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iZm9ybS1n",
+            "cm91cCI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxsYWJlbD5DdXJyZW5jeSBUeXBlICo8L2xhYmVs",
+            "PgogICAgICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJjdXJyZW5jeS1zZWxlY3QiPgogICAg",
+            "ICAgICAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iY3VycmVuY3ktb3B0aW9uIHNlbGVjdGVk",
+            "IiBvbmNsaWNrPSJzZWxlY3RDdXJyZW5jeSgnZGlhbW9uZHMnKSIgaWQ9ImN1cnItZGlhbW9uZHMiPgog",
+            "ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzPSJjdXJyZW5jeS1sYWJlbCI+",
+            "8J+SjiBEaWFtb25kczwvc3Bhbj4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8c3BhbiBj",
+            "bGFzcz0iY3VycmVuY3ktZGVzYyI+U3RhbmRhcmQgY3VycmVuY3k8L3NwYW4+CiAgICAgICAgICAgICAg",
+            "ICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9",
+            "ImN1cnJlbmN5LW9wdGlvbiIgb25jbGljaz0ic2VsZWN0Q3VycmVuY3koJ25ldGhlcml0ZScpIiBpZD0i",
+            "Y3Vyci1uZXRoZXJpdGUiPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNz",
+            "PSJjdXJyZW5jeS1sYWJlbCI+4pqrIE5ldGhlcml0ZSBJbmdvdHM8L3NwYW4+CiAgICAgICAgICAgICAg",
+            "ICAgICAgICAgICAgICAgICAgPHNwYW4gY2xhc3M9ImN1cnJlbmN5LWRlc2MiPlByZW1pdW0gY3VycmVu",
+            "Y3k8L3NwYW4+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAg",
+            "ICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgICAgICAgIDxpbnB1dCB0eXBlPSJoaWRkZW4i",
+            "IGlkPSJpdGVtQ3VycmVuY3kiIHZhbHVlPSJkaWFtb25kcyI+CiAgICAgICAgICAgICAgICAgICAgPC9k",
+            "aXY+CgogICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tcm93Ij4KICAgICAgICAgICAg",
+            "ICAgICAgICAgICAgPGRpdiBjbGFzcz0iZm9ybS1ncm91cCI+CiAgICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgICA8bGFiZWw+UHJpY2UgKjwvbGFiZWw+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8aW5w",
+            "dXQgdHlwZT0ibnVtYmVyIiBpZD0iaXRlbVByaWNlIiBwbGFjZWhvbGRlcj0iMTAiIG1pbj0iMSI+CiAg",
+            "ICAgICAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICAgICAgICA8ZGl2IGNs",
+            "YXNzPSJmb3JtLWdyb3VwIj4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxsYWJlbD5RdWFudGl0",
+            "eSBQZXIgUHVyY2hhc2UgKjwvbGFiZWw+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8aW5wdXQg",
+            "dHlwZT0ibnVtYmVyIiBpZD0iaXRlbVF0eSIgcGxhY2Vob2xkZXI9IjY0ICgxIHN0YWNrKSIgbWluPSIx",
+            "Ij4KICAgICAgICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPC9kaXY+",
+            "CiAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iZm9ybS1ncm91cCI+CiAgICAgICAgICAgICAg",
+            "ICAgICAgICAgIDxsYWJlbD5BbW91bnQgQXZhaWxhYmxlPC9sYWJlbD4KICAgICAgICAgICAgICAgICAg",
+            "ICAgICAgPGlucHV0IHR5cGU9Im51bWJlciIgaWQ9Iml0ZW1BbW91bnQiIHBsYWNlaG9sZGVyPSJIb3cg",
+            "bWFueSB5b3UgaGF2ZSBpbiBzdG9jayAoZS5nLiAxMikiIG1pbj0iMCI+CiAgICAgICAgICAgICAgICAg",
+            "ICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iZm9ybS1ncm91cCI+CiAgICAg",
+            "ICAgICAgICAgICAgICAgICAgIDxsYWJlbD5EZXNjcmlwdGlvbjwvbGFiZWw+CiAgICAgICAgICAgICAg",
+            "ICAgICAgICAgIDx0ZXh0YXJlYSBpZD0iaXRlbURlc2MiIHJvd3M9IjIiIHBsYWNlaG9sZGVyPSJJdGVt",
+            "IGRlc2NyaXB0aW9uLi4uIj48L3RleHRhcmVhPgogICAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAg",
+            "ICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tZ3JvdXAiPgogICAgICAgICAgICAgICAgICAg",
+            "ICAgICA8bGFiZWw+U3RvY2sgU3RhdHVzICo8L2xhYmVsPgogICAgICAgICAgICAgICAgICAgICAgICA8",
+            "c2VsZWN0IGlkPSJpdGVtU3RvY2siPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2",
+            "YWx1ZT0ic2VsbGluZyI+U2VsbGluZzwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgICAgICAg",
+            "PG9wdGlvbiB2YWx1ZT0iYXZhaWxhYmxlIj5PcmRlcidzIEF2YWlsYWJsZTwvb3B0aW9uPgogICAgICAg",
+            "ICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0ibm90X3NlbGxpbmciPk5vdCBTZWxsaW5n",
+            "IFJpZ2h0IE5vdzwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgICA8L3NlbGVjdD4KICAgICAg",
+            "ICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJmb3JtLXJv",
+            "dyI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tZ3JvdXAiPgogICAgICAg",
+            "ICAgICAgICAgICAgICAgICAgICAgPGxhYmVsIHN0eWxlPSJkaXNwbGF5OmZsZXg7IGFsaWduLWl0ZW1z",
+            "OmNlbnRlcjsgZ2FwOjAuNXJlbTsgY3Vyc29yOnBvaW50ZXI7IHBhZGRpbmctdG9wOiAwLjVyZW07Ij4K",
+            "ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8aW5wdXQgdHlwZT0iY2hlY2tib3giIGlkPSJp",
+            "dGVtRmVhdHVyZWQiIHN0eWxlPSJ3aWR0aDphdXRvOyBtYXJnaW46MDsiPgogICAgICAgICAgICAgICAg",
+            "ICAgICAgICAgICAgICAgIDxzcGFuPkZlYXR1cmVkICjimIUgcGluIHRvIHRvcCBvZiBzaG9wKTwvc3Bh",
+            "bj4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvbGFiZWw+CiAgICAgICAgICAgICAgICAgICAg",
+            "ICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJmb3JtLWdyb3VwIj4K",
+            "ICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxsYWJlbD5SZXN0b2NrIEVUQSAob3B0aW9uYWwpPC9s",
+            "YWJlbD4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxpbnB1dCB0eXBlPSJkYXRlIiBpZD0iaXRl",
+            "bVJlc3RvY2tFdGEiIHRpdGxlPSJTaG93IGEgJ1Jlc3RvY2sgc29vbicgYmFkZ2Ugd2l0aCB0aGlzIGRh",
+            "dGUiPgogICAgICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8L2Rp",
+            "dj4KICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJmb3JtLWdyb3VwIj4KICAgICAgICAgICAg",
+            "ICAgICAgICAgICAgPGxhYmVsPkJ1bmRsZSBjb250ZW50cyAob3B0aW9uYWwg4oCUIG9uZSBpdGVtIHBl",
+            "ciBsaW5lLCBlLmcuICIxeCBFbHl0cmEiKTwvbGFiZWw+CiAgICAgICAgICAgICAgICAgICAgICAgIDx0",
+            "ZXh0YXJlYSBpZD0iaXRlbUJ1bmRsZSIgcm93cz0iMyIgcGxhY2Vob2xkZXI9IkxlYXZlIGJsYW5rIGZv",
+            "ciBub3JtYWwgaXRlbXMuJiMxMDsxeCBFbHl0cmEmIzEwOzY0eCBGaXJld29ya3MmIzEwOzF4IE1lbmRp",
+            "bmcgQm9vayI+PC90ZXh0YXJlYT4KICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAg",
+            "ICAgICAgICA8ZGl2IGNsYXNzPSJmb3JtLWdyb3VwIj4KICAgICAgICAgICAgICAgICAgICAgICAgPGxh",
+            "YmVsPkxvdy1zdG9jayBhbGVydCB0aHJlc2hvbGQgKG9wdGlvbmFsKTwvbGFiZWw+CiAgICAgICAgICAg",
+            "ICAgICAgICAgICAgIDxpbnB1dCB0eXBlPSJudW1iZXIiIGlkPSJpdGVtTG93U3RvY2siIG1pbj0iMCIg",
+            "cGxhY2Vob2xkZXI9ImUuZy4gMyDigJQgeW91J2xsIGdldCBhIHRvYXN0IHdoZW4gYW1vdW50IGRyb3Bz",
+            "IGF0IG9yIGJlbG93IHRoaXMiPgogICAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAg",
+            "ICAgICAgIDxidXR0b24gY2xhc3M9ImNoZWNrb3V0LWJ0biIgb25jbGljaz0ic2F2ZUl0ZW0oKSIgaWQ9",
+            "InNhdmVCdG4iPkFkZCBJdGVtPC9idXR0b24+CiAgICAgICAgICAgICAgICAgICAgPGJ1dHRvbiBjbGFz",
+            "cz0iY2hlY2tvdXQtYnRuIiBvbmNsaWNrPSJjYW5jZWxFZGl0KCkiIGlkPSJjYW5jZWxCdG4iIHN0eWxl",
+            "PSJkaXNwbGF5Om5vbmU7IGJhY2tncm91bmQ6IHZhcigtLWJnLXNlY29uZGFyeSk7IGNvbG9yOiB2YXIo",
+            "LS10ZXh0LXByaW1hcnkpOyBtYXJnaW4tdG9wOiAwLjVyZW07Ij5DYW5jZWwgRWRpdDwvYnV0dG9uPgog",
+            "ICAgICAgICAgICAgICAgPC9kaXY+CgogICAgICAgICAgICAgICAgPGgzIHN0eWxlPSJtYXJnaW46IDJy",
+            "ZW0gMCAxcmVtOyBmb250LXNpemU6IDEuMTI1cmVtOyI+Q3VycmVudCBJbnZlbnRvcnk8L2gzPgogICAg",
+            "ICAgICAgICAgICAgPGRpdiBzdHlsZT0ib3ZlcmZsb3cteDogYXV0bzsiPgogICAgICAgICAgICAgICAg",
+            "ICAgIDx0YWJsZSBjbGFzcz0iYWRtaW4tdGFibGUiPgogICAgICAgICAgICAgICAgICAgICAgICA8dGhl",
+            "YWQ+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8dHI+CiAgICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgICAgICAgPHRoPk5hbWU8L3RoPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDx0aD5D",
+            "YXRlZ29yeTwvdGg+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPHRoPlByaWNlPC90aD4K",
+            "ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8dGg+UXR5PC90aD4KICAgICAgICAgICAgICAg",
+            "ICAgICAgICAgICAgICAgICA8dGg+QW1vdW50PC90aD4KICAgICAgICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgICA8dGg+U3RvY2s8L3RoPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDx0aD5GZWF0",
+            "dXJlZDwvdGg+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPHRoPkFjdGlvbnM8L3RoPgog",
+            "ICAgICAgICAgICAgICAgICAgICAgICAgICAgPC90cj4KICAgICAgICAgICAgICAgICAgICAgICAgPC90",
+            "aGVhZD4KICAgICAgICAgICAgICAgICAgICAgICAgPHRib2R5IGlkPSJhZG1pbkl0ZW1zTGlzdCI+PC90",
+            "Ym9keT4KICAgICAgICAgICAgICAgICAgICA8L3RhYmxlPgogICAgICAgICAgICAgICAgPC9kaXY+CiAg",
+            "ICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgPCEtLSBUaWNrZXRzIFNlY3Rpb24gLS0+CiAgICAg",
+            "ICAgICAgIDxkaXYgY2xhc3M9InBhbmVsLXNlY3Rpb24iIGlkPSJwYW5lbC10aWNrZXRzIj4KICAgICAg",
+            "ICAgICAgICAgIDxoMiBzdHlsZT0ibWFyZ2luLWJvdHRvbTogMXJlbTsgZm9udC1zaXplOiAxLjI1cmVt",
+            "OyI+U3VwcG9ydCBUaWNrZXRzPC9oMj4KICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9Im9yZGVycy10",
+            "b29sYmFyIj4KICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJ0b29sYmFyLWxlZnQiPgogICAg",
+            "ICAgICAgICAgICAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLS1wcmltYXJ5IiBvbmNsaWNr",
+            "PSJyZW5kZXJPd25lclRpY2tldHMoKSI+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8c3ZnIGNs",
+            "YXNzPSJpY29uIiB2aWV3Qm94PSIwIDAgMjQgMjQiIGFyaWEtaGlkZGVuPSJ0cnVlIj48cG9seWxpbmUg",
+            "cG9pbnRzPSIyMyA0IDIzIDEwIDE3IDEwIj48L3BvbHlsaW5lPjxwYXRoIGQ9Ik0yMC40OSAxNWE5IDkg",
+            "MCAxIDEtMi4xMi05LjM2TDIzIDEwIj48L3BhdGg+PC9zdmc+CiAgICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgICA8c3Bhbj5SZWZyZXNoPC9zcGFuPgogICAgICAgICAgICAgICAgICAgICAgICA8L2J1dHRvbj4K",
+            "ICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJ0",
+            "b29sYmFyLXJpZ2h0Ij4KICAgICAgICAgICAgICAgICAgICAgICAgPHNwYW4gY2xhc3M9Im9yZGVycy1j",
+            "b3VudCIgaWQ9InRpY2tldHNDb3VudCI+MCB0aWNrZXRzPC9zcGFuPgogICAgICAgICAgICAgICAgICAg",
+            "IDwvZGl2PgogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICA8ZGl2IGlkPSJvd25l",
+            "clRpY2tldHNMaXN0Ij48L2Rpdj4KICAgICAgICAgICAgPC9kaXY+CgogICAgICAgICAgICA8IS0tIEFu",
+            "bm91bmNlbWVudHMgLS0+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9InBhbmVsLXNlY3Rpb24iIGlkPSJw",
+            "YW5lbC1hbm5vdW5jZSI+CiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJhZG1pbi1mb3JtIj4KICAg",
+            "ICAgICAgICAgICAgICAgICA8aDM+VXBkYXRlIEFubm91bmNlbWVudDwvaDM+CiAgICAgICAgICAgICAg",
+            "ICAgICAgPGRpdiBjbGFzcz0iZm9ybS1ncm91cCI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxsYWJl",
+            "bD5Bbm5vdW5jZW1lbnQgVGV4dCAobGVhdmUgYmxhbmsgYW5kIFNhdmUgdG8gaGlkZSB0aGUgYmFyKTwv",
+            "bGFiZWw+CiAgICAgICAgICAgICAgICAgICAgICAgIDx0ZXh0YXJlYSBpZD0iYW5ub3VuY2VUZXh0IiBy",
+            "b3dzPSIzIiBwbGFjZWhvbGRlcj0iRW50ZXIgYW5ub3VuY2VtZW50Li4uIj48L3RleHRhcmVhPgogICAg",
+            "ICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICAgIDxkaXYgc3R5bGU9ImRpc3Bs",
+            "YXk6ZmxleDsgZ2FwOjAuNzVyZW07IGZsZXgtd3JhcDp3cmFwOyI+CiAgICAgICAgICAgICAgICAgICAg",
+            "ICAgIDxidXR0b24gY2xhc3M9ImNoZWNrb3V0LWJ0biIgb25jbGljaz0idXBkYXRlQW5ub3VuY2VtZW50",
+            "KCkiPlNhdmUgQW5ub3VuY2VtZW50PC9idXR0b24+CiAgICAgICAgICAgICAgICAgICAgICAgIDxidXR0",
+            "b24gY2xhc3M9ImJ0bi1zZWNvbmRhcnkiIG9uY2xpY2s9ImNsZWFyQW5ub3VuY2VtZW50KCkiPkNsZWFy",
+            "IEFubm91bmNlbWVudDwvYnV0dG9uPgogICAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAg",
+            "ICAgICAgPC9kaXY+CgogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iYWRtaW4tZm9ybSIgc3R5bGU9",
+            "Im1hcmdpbi10b3A6IDEuNXJlbTsiPgogICAgICAgICAgICAgICAgICAgIDxoMz5OZXctb3JkZXIgTm90",
+            "aWZpY2F0aW9uczwvaDM+CiAgICAgICAgICAgICAgICAgICAgPHAgc3R5bGU9ImNvbG9yOiB2YXIoLS10",
+            "ZXh0LXNlY29uZGFyeSk7IGZvbnQtc2l6ZTogMC44NzVyZW07IG1hcmdpbi1ib3R0b206IDAuNzVyZW07",
+            "Ij4KICAgICAgICAgICAgICAgICAgICAgICAgR2V0IGEgc291bmQgYW5kIGEgZGVza3RvcCBwb3B1cCB0",
+            "aGUgbW9tZW50IGEgY3VzdG9tZXIgcGxhY2VzIGFuIG9yZGVyLCBldmVuIHdoZW4gdGhpcyB0YWIgaXMg",
+            "aW4gdGhlIGJhY2tncm91bmQuIFN0b3JlZCBvbiB0aGlzIGRldmljZSDigJQgdG9nZ2xlIG9uIGV2ZXJ5",
+            "IGRldmljZSB5b3Ugd2FudCBwaW5nZWQuCiAgICAgICAgICAgICAgICAgICAgPC9wPgogICAgICAgICAg",
+            "ICAgICAgICAgIDxkaXYgc3R5bGU9ImRpc3BsYXk6ZmxleDsgZmxleC1kaXJlY3Rpb246IGNvbHVtbjsg",
+            "Z2FwOiAwLjZyZW07Ij4KICAgICAgICAgICAgICAgICAgICAgICAgPGxhYmVsIHN0eWxlPSJkaXNwbGF5",
+            "OmZsZXg7IGFsaWduLWl0ZW1zOmNlbnRlcjsgZ2FwOiAwLjZyZW07IGN1cnNvcjogcG9pbnRlcjsiPgog",
+            "ICAgICAgICAgICAgICAgICAgICAgICAgICAgPGlucHV0IHR5cGU9ImNoZWNrYm94IiBpZD0ibm90aWZ5",
+            "U291bmRUb2dnbGUiIG9uY2hhbmdlPSJzZXROb3RpZnlQcmVmKCdzb3VuZCcsIHRoaXMuY2hlY2tlZCki",
+            "PgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPHNwYW4+UGxheSBhIHNvdW5kPC9zcGFuPgogICAg",
+            "ICAgICAgICAgICAgICAgICAgICA8L2xhYmVsPgogICAgICAgICAgICAgICAgICAgICAgICA8bGFiZWwg",
+            "c3R5bGU9ImRpc3BsYXk6ZmxleDsgYWxpZ24taXRlbXM6Y2VudGVyOyBnYXA6IDAuNnJlbTsgY3Vyc29y",
+            "OiBwb2ludGVyOyI+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8aW5wdXQgdHlwZT0iY2hlY2ti",
+            "b3giIGlkPSJub3RpZnlEZXNrdG9wVG9nZ2xlIiBvbmNoYW5nZT0ic2V0Tm90aWZ5UHJlZignZGVza3Rv",
+            "cCcsIHRoaXMuY2hlY2tlZCkiPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPHNwYW4+U2hvdyBh",
+            "IGRlc2t0b3Agbm90aWZpY2F0aW9uIDxzcGFuIGlkPSJub3RpZnlQZXJtTGFiZWwiIHN0eWxlPSJjb2xv",
+            "cjogdmFyKC0tdGV4dC1zZWNvbmRhcnkpOyBmb250LXNpemU6IDAuODVyZW07Ij48L3NwYW4+PC9zcGFu",
+            "PgogICAgICAgICAgICAgICAgICAgICAgICA8L2xhYmVsPgogICAgICAgICAgICAgICAgICAgICAgICA8",
+            "ZGl2IHN0eWxlPSJkaXNwbGF5OmZsZXg7IGdhcDogMC41cmVtOyBmbGV4LXdyYXA6IHdyYXA7Ij4KICAg",
+            "ICAgICAgICAgICAgICAgICAgICAgICAgIDxidXR0b24gY2xhc3M9ImJ0biBidG4tLWdob3N0IGJ0bi0t",
+            "c20iIG9uY2xpY2s9InRlc3RPcmRlck5vdGlmaWNhdGlvbigpIj5UZXN0IG5vdGlmaWNhdGlvbjwvYnV0",
+            "dG9uPgogICAgICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8L2Rp",
+            "dj4KICAgICAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImFkbWlu",
+            "LWZvcm0iIHN0eWxlPSJtYXJnaW4tdG9wOiAxLjVyZW07Ij4KICAgICAgICAgICAgICAgICAgICA8aDM+",
+            "VXBkYXRlIE1vZGU8L2gzPgogICAgICAgICAgICAgICAgICAgIDxwIHN0eWxlPSJjb2xvcjogdmFyKC0t",
+            "dGV4dC1zZWNvbmRhcnkpOyBmb250LXNpemU6IDAuODc1cmVtOyBtYXJnaW4tYm90dG9tOiAwLjc1cmVt",
+            "OyI+CiAgICAgICAgICAgICAgICAgICAgICAgIFR1cm4gb24gVXBkYXRlIE1vZGUgdG8gY2xvc2UgdGhl",
+            "IHNob3AgdG8gZXZlcnlvbmUuIEEgZnVsbC1zY3JlZW4gcGFnZSBhcHBlYXJzIG9uIGV2ZXJ5IGRldmlj",
+            "ZSBpbnN0ZWFkIG9mIHRoZSBzaG9wLgogICAgICAgICAgICAgICAgICAgICAgICBTdGFmZiBjYW4gc3Rp",
+            "bGwgYWNjZXNzIHRoZSBzaG9wIGJ5IHR5cGluZyB0aGUgdW5sb2NrIGNvZGUgYXQgdGhlIGJvdHRvbSBv",
+            "ZiB0aGUgdXBkYXRlIHBhZ2UsIG9yIGJ5IG9wZW5pbmcgdGhlIE93bmVyIFBhbmVsLgogICAgICAgICAg",
+            "ICAgICAgICAgIDwvcD4KICAgICAgICAgICAgICAgICAgICA8ZGl2IHN0eWxlPSJkaXNwbGF5OmZsZXg7",
+            "IGdhcDowLjc1cmVtOyBmbGV4LXdyYXA6d3JhcDsgYWxpZ24taXRlbXM6Y2VudGVyOyI+CiAgICAgICAg",
+            "ICAgICAgICAgICAgICAgIDxidXR0b24gaWQ9Im1haW50ZW5hbmNlVG9nZ2xlQnRuIiBjbGFzcz0iYnRu",
+            "IGJ0bi0tcHJpbWFyeSIgb25jbGljaz0idG9nZ2xlTWFpbnRlbmFuY2UoKSI+TG9hZGluZ+KApjwvYnV0",
+            "dG9uPgogICAgICAgICAgICAgICAgICAgICAgICA8c3BhbiBpZD0ibWFpbnRlbmFuY2VTdGF0dXMiIHN0",
+            "eWxlPSJjb2xvcjogdmFyKC0tdGV4dC1zZWNvbmRhcnkpOyBmb250LXNpemU6IDAuODc1cmVtOyI+PC9z",
+            "cGFuPgogICAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICAgIDxkaXYgc3R5",
+            "bGU9Im1hcmdpbi10b3A6IDFyZW07IGRpc3BsYXk6ZmxleDsgZ2FwOjAuNzVyZW07IGZsZXgtd3JhcDp3",
+            "cmFwOyBhbGlnbi1pdGVtczpmbGV4LWVuZDsiPgogICAgICAgICAgICAgICAgICAgICAgICA8ZGl2IGNs",
+            "YXNzPSJmb3JtLWdyb3VwIiBzdHlsZT0iZmxleDogMTsgbWluLXdpZHRoOiAyMjBweDsgbWFyZ2luLWJv",
+            "dHRvbTogMDsiPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPGxhYmVsPkVzdGltYXRlZCBiYWNr",
+            "LW9ubGluZSB0aW1lIChvcHRpb25hbCk8L2xhYmVsPgogICAgICAgICAgICAgICAgICAgICAgICAgICAg",
+            "PGlucHV0IHR5cGU9ImRhdGV0aW1lLWxvY2FsIiBpZD0ibWFpbnRlbmFuY2VFdGFJbnB1dCIgdGl0bGU9",
+            "IkN1c3RvbWVycyB3aWxsIHNlZSBhIGxpdmUgY291bnRkb3duIHRvIHRoaXMgdGltZSI+CiAgICAgICAg",
+            "ICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICAgICAgICA8YnV0dG9uIGNsYXNz",
+            "PSJidG4gYnRuLS1wcmltYXJ5IGJ0bi0tc20iIG9uY2xpY2s9InNhdmVNYWludGVuYW5jZUV0YSgpIj5T",
+            "YXZlIEVUQTwvYnV0dG9uPgogICAgICAgICAgICAgICAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4g",
+            "YnRuLS1naG9zdCBidG4tLXNtIiBvbmNsaWNrPSJjbGVhck1haW50ZW5hbmNlRXRhKCkiPkNsZWFyIEVU",
+            "QTwvYnV0dG9uPgogICAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICAgIDxw",
+            "IHN0eWxlPSJjb2xvcjogdmFyKC0tdGV4dC1zZWNvbmRhcnkpOyBmb250LXNpemU6IDAuNzhyZW07IG1h",
+            "cmdpbi10b3A6IDAuNHJlbTsiPgogICAgICAgICAgICAgICAgICAgICAgICBJZiBzZXQsIGN1c3RvbWVy",
+            "cyBzZWUgYSBsaXZlICJCYWNrIG9ubGluZSBpbiBISDpNTTpTUyIgY291bnRkb3duIG9uIHRoZSBVcGRh",
+            "dGUgTW9kZSBwYWdlLiBMZWF2ZSBibGFuayB0byBoaWRlIGl0LgogICAgICAgICAgICAgICAgICAgIDwv",
+            "cD4KICAgICAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImFkbWlu",
+            "LWZvcm0iIHN0eWxlPSJtYXJnaW4tdG9wOiAxLjVyZW07Ij4KICAgICAgICAgICAgICAgICAgICA8aDM+",
+            "QmFja3VwICYgUmVzdG9yZTwvaDM+CiAgICAgICAgICAgICAgICAgICAgPHAgc3R5bGU9ImNvbG9yOiB2",
+            "YXIoLS10ZXh0LXNlY29uZGFyeSk7IGZvbnQtc2l6ZTogMC44NzVyZW07IG1hcmdpbi1ib3R0b206IDAu",
+            "NzVyZW07Ij4KICAgICAgICAgICAgICAgICAgICAgICAgT3JkZXJzLCBpdGVtcywgYWNjb3VudHMsIHRp",
+            "Y2tldHMsIGFuZCBhbm5vdW5jZW1lbnRzIGFyZSBzeW5jZWQgdGhyb3VnaCB5b3VyIGNsb3VkIGRhdGFi",
+            "YXNlLgogICAgICAgICAgICAgICAgICAgICAgICBFeHBvcnQgc2F2ZXMgYSBzbmFwc2hvdCBvZiBldmVy",
+            "eXRoaW5nIHRvIGEgSlNPTiBmaWxlIHlvdSBjYW4ga2VlcCBhcyBhIGJhY2t1cC4gSW1wb3J0IG92ZXJ3",
+            "cml0ZXMgdGhlIGNsb3VkIGRhdGEgd2l0aCB0aGF0IGZpbGUuCiAgICAgICAgICAgICAgICAgICAgPC9w",
+            "PgogICAgICAgICAgICAgICAgICAgIDxkaXYgc3R5bGU9ImRpc3BsYXk6ZmxleDsgZ2FwOjAuNzVyZW07",
+            "IGZsZXgtd3JhcDp3cmFwOyBhbGlnbi1pdGVtczpjZW50ZXI7Ij4KICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgPGJ1dHRvbiBjbGFzcz0iY2hlY2tvdXQtYnRuIiBvbmNsaWNrPSJleHBvcnREYXRhKCkiPkV4cG9y",
+            "dCBEYXRhPC9idXR0b24+CiAgICAgICAgICAgICAgICAgICAgICAgIDxidXR0b24gY2xhc3M9ImJ0bi1z",
+            "ZWNvbmRhcnkiIG9uY2xpY2s9ImRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdpbXBvcnRGaWxlSW5wdXQn",
+            "KS5jbGljaygpIj5JbXBvcnQgRGF0YTwvYnV0dG9uPgogICAgICAgICAgICAgICAgICAgICAgICA8aW5w",
+            "dXQgdHlwZT0iZmlsZSIgaWQ9ImltcG9ydEZpbGVJbnB1dCIgYWNjZXB0PSJhcHBsaWNhdGlvbi9qc29u",
+            "IiBzdHlsZT0iZGlzcGxheTpub25lOyIgb25jaGFuZ2U9ImltcG9ydERhdGEodGhpcykiPgogICAgICAg",
+            "ICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgIDwvZGl2",
+            "PgoKICAgICAgICAgICAgPCEtLSBEaXNjb3VudHMgU2VjdGlvbiAtLT4KICAgICAgICAgICAgPGRpdiBj",
+            "bGFzcz0icGFuZWwtc2VjdGlvbiIgaWQ9InBhbmVsLWRpc2NvdW50cyI+CiAgICAgICAgICAgICAgICA8",
+            "ZGl2IGNsYXNzPSJhZG1pbi1mb3JtIj4KICAgICAgICAgICAgICAgICAgICA8aDM+Q3JlYXRlIERpc2Nv",
+            "dW50IENvZGU8L2gzPgogICAgICAgICAgICAgICAgICAgIDxwIHN0eWxlPSJjb2xvcjogdmFyKC0tdGV4",
+            "dC1zZWNvbmRhcnkpOyBmb250LXNpemU6IDAuODc1cmVtOyBtYXJnaW4tYm90dG9tOiAwLjc1cmVtOyI+",
+            "CiAgICAgICAgICAgICAgICAgICAgICAgIENvZGVzIGFyZSBjYXNlLWluc2Vuc2l0aXZlIGFuZCBzeW5j",
+            "ZWQgYWNyb3NzIGV2ZXJ5IGRldmljZS4gQ3VzdG9tZXJzIGVudGVyIHRoZSBjb2RlIGluIHRoZSBjYXJ0",
+            "IHRvIHRha2UgYSBwZXJjZW50YWdlIG9mZiB0aGVpciB0b3RhbC4KICAgICAgICAgICAgICAgICAgICA8",
+            "L3A+CiAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iZm9ybS1yb3ciPgogICAgICAgICAgICAg",
+            "ICAgICAgICAgICA8ZGl2IGNsYXNzPSJmb3JtLWdyb3VwIj4KICAgICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgIDxsYWJlbD5Db2RlICo8L2xhYmVsPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPGlucHV0",
+            "IHR5cGU9InRleHQiIGlkPSJkaXNjb3VudENvZGVJbnB1dCIgcGxhY2Vob2xkZXI9IlNVTU1FUjIwIiBt",
+            "YXhsZW5ndGg9IjMyIj4KICAgICAgICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAg",
+            "ICAgICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tZ3JvdXAiPgogICAgICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgPGxhYmVsPlBlcmNlbnQgb2ZmICogKDHigJMxMDApPC9sYWJlbD4KICAgICAgICAgICAgICAgICAg",
+            "ICAgICAgICAgIDxpbnB1dCB0eXBlPSJudW1iZXIiIGlkPSJkaXNjb3VudFBlcmNlbnRJbnB1dCIgcGxh",
+            "Y2Vob2xkZXI9IjIwIiBtaW49IjEiIG1heD0iMTAwIj4KICAgICAgICAgICAgICAgICAgICAgICAgPC9k",
+            "aXY+CiAgICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFz",
+            "cz0iZm9ybS1yb3ciPgogICAgICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJmb3JtLWdyb3Vw",
+            "Ij4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxsYWJlbD5FeHBpcmVzIChvcHRpb25hbCk8L2xh",
+            "YmVsPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPGlucHV0IHR5cGU9ImRhdGUiIGlkPSJkaXNj",
+            "b3VudEV4cGlyeUlucHV0Ij4KICAgICAgICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAg",
+            "ICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tZ3JvdXAiPgogICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgICAgPGxhYmVsPk1heCB1c2VzIChvcHRpb25hbCk8L2xhYmVsPgogICAgICAgICAgICAgICAgICAg",
+            "ICAgICAgICAgPGlucHV0IHR5cGU9Im51bWJlciIgaWQ9ImRpc2NvdW50TWF4VXNlc0lucHV0IiBwbGFj",
+            "ZWhvbGRlcj0ibGVhdmUgYmxhbmsgZm9yIHVubGltaXRlZCIgbWluPSIxIj4KICAgICAgICAgICAgICAg",
+            "ICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICAg",
+            "ICAgPGJ1dHRvbiBjbGFzcz0iY2hlY2tvdXQtYnRuIiBvbmNsaWNrPSJzYXZlRGlzY291bnQoKSI+QWRk",
+            "IERpc2NvdW50IENvZGU8L2J1dHRvbj4KICAgICAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAg",
+            "ICAgIDxoMyBzdHlsZT0ibWFyZ2luOiAycmVtIDAgMXJlbTsgZm9udC1zaXplOiAxLjEyNXJlbTsiPkFj",
+            "dGl2ZSBDb2RlczwvaDM+CiAgICAgICAgICAgICAgICA8ZGl2IHN0eWxlPSJvdmVyZmxvdy14OiBhdXRv",
+            "OyI+CiAgICAgICAgICAgICAgICAgICAgPHRhYmxlIGNsYXNzPSJhZG1pbi10YWJsZSI+CiAgICAgICAg",
+            "ICAgICAgICAgICAgICAgIDx0aGVhZD4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDx0cj4KICAg",
+            "ICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8dGg+Q29kZTwvdGg+CiAgICAgICAgICAgICAgICAg",
+            "ICAgICAgICAgICAgICAgPHRoPlBlcmNlbnQgb2ZmPC90aD4KICAgICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgICAgICA8dGg+RXhwaXJlczwvdGg+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPHRo",
+            "PlVzZXM8L3RoPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDx0aD5DcmVhdGVkPC90aD4K",
+            "ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8dGg+QWN0aW9uczwvdGg+CiAgICAgICAgICAg",
+            "ICAgICAgICAgICAgICAgICA8L3RyPgogICAgICAgICAgICAgICAgICAgICAgICA8L3RoZWFkPgogICAg",
+            "ICAgICAgICAgICAgICAgICAgICA8dGJvZHkgaWQ9ImFkbWluRGlzY291bnRzTGlzdCI+PC90Ym9keT4K",
+            "ICAgICAgICAgICAgICAgICAgICA8L3RhYmxlPgogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAg",
+            "ICAgIDwvZGl2PgoKICAgICAgICAgICAgPCEtLSBSZXZpZXdzIFNlY3Rpb24gLS0+CiAgICAgICAgICAg",
+            "IDxkaXYgY2xhc3M9InBhbmVsLXNlY3Rpb24iIGlkPSJwYW5lbC1yZXZpZXdzIj4KICAgICAgICAgICAg",
+            "ICAgIDxoMiBzdHlsZT0ibWFyZ2luLWJvdHRvbTogMC41cmVtOyBmb250LXNpemU6IDEuMjVyZW07Ij5D",
+            "dXN0b21lciBSZXZpZXdzPC9oMj4KICAgICAgICAgICAgICAgIDxwIHN0eWxlPSJjb2xvcjogdmFyKC0t",
+            "dGV4dC1zZWNvbmRhcnkpOyBmb250LXNpemU6IDAuODc1cmVtOyBtYXJnaW4tYm90dG9tOiAxcmVtOyI+",
+            "CiAgICAgICAgICAgICAgICAgICAgQ3VzdG9tZXJzIGNhbiBsZWF2ZSBhIHN0YXIgcmF0aW5nICsgc2hv",
+            "cnQgY29tbWVudCBhZnRlciB0aGVpciBvcmRlciBpcyBtYXJrZWQgQ29tcGxldGVkLiBVc2UgdGhlIEhp",
+            "ZGUgYnV0dG9uIHRvIHJlbW92ZSBhbnl0aGluZyBpbmFwcHJvcHJpYXRlIGZyb20gcHVibGljIHZpZXcu",
+            "CiAgICAgICAgICAgICAgICA8L3A+CiAgICAgICAgICAgICAgICA8ZGl2IGlkPSJhZG1pblJldmlld3NM",
+            "aXN0Ij48L2Rpdj4KICAgICAgICAgICAgPC9kaXY+CgogICAgICAgICAgICA8IS0tIEJhbnMgU2VjdGlv",
+            "biAtLT4KICAgICAgICAgICAgPGRpdiBjbGFzcz0icGFuZWwtc2VjdGlvbiIgaWQ9InBhbmVsLWJhbnMi",
+            "PgogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iYWRtaW4tZm9ybSI+CiAgICAgICAgICAgICAgICAg",
+            "ICAgPGgzPkJhbiBvciBXYXJuIGFuIGFjY291bnQ8L2gzPgogICAgICAgICAgICAgICAgICAgIDxwIHN0",
+            "eWxlPSJjb2xvcjogdmFyKC0tdGV4dC1zZWNvbmRhcnkpOyBmb250LXNpemU6IDAuODc1cmVtOyBtYXJn",
+            "aW4tYm90dG9tOiAwLjc1cmVtOyI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxzdHJvbmcgc3R5bGU9",
+            "ImNvbG9yOnZhcigtLWRhbmdlcikiPkJhbjwvc3Ryb25nPiBibG9ja3MgdGhlIGFjY291bnQgZnJvbSBw",
+            "bGFjaW5nIG9yZGVycywgY3JlYXRpbmcgdGhhdCB1c2VybmFtZSwgb3Igc2lnbmluZyBpbi4gPHN0cm9u",
+            "ZyBzdHlsZT0iY29sb3I6dmFyKC0td2FybmluZykiPldhcm48L3N0cm9uZz4gc3RpbGwgbGV0cyB0aGVt",
+            "IG9yZGVyIGJ1dCBzaG93cyBhIHdhcm5pbmcgdG9hc3QgZXZlcnkgdmlzaXQuIFVzZXJuYW1lcyBhcmUg",
+            "Y2FzZS1pbnNlbnNpdGl2ZSAoc28gPGNvZGU+U3RldmVYPC9jb2RlPiBhbmQgPGNvZGU+c3RldmV4PC9j",
+            "b2RlPiBhcmUgdHJlYXRlZCB0aGUgc2FtZSkuCiAgICAgICAgICAgICAgICAgICAgPC9wPgogICAgICAg",
+            "ICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tcm93Ij4KICAgICAgICAgICAgICAgICAgICAgICAg",
+            "PGRpdiBjbGFzcz0iZm9ybS1ncm91cCI+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8bGFiZWw+",
+            "QWNjb3VudCAvIHVzZXJuYW1lICo8L2xhYmVsPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPGlu",
+            "cHV0IHR5cGU9InRleHQiIGlkPSJiYW5BY2NvdW50SW5wdXQiIHBsYWNlaG9sZGVyPSJlLmcuIFN0ZXZl",
+            "WCIgbWF4bGVuZ3RoPSI2NCI+CiAgICAgICAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAg",
+            "ICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJmb3JtLWdyb3VwIj4KICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgICAgIDxsYWJlbD5BY3Rpb24gKjwvbGFiZWw+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8",
+            "c2VsZWN0IGlkPSJiYW5BY3Rpb25JbnB1dCI+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg",
+            "PG9wdGlvbiB2YWx1ZT0iYmFuIj5CYW4gKGJsb2NrIGZyb20gb3JkZXJpbmcgLyBzaWduaW4pPC9vcHRp",
+            "b24+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0id2FybiI+V2Fy",
+            "biAoc2hvdyB3YXJuaW5nIHRvYXN0KTwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgICAgICAg",
+            "PC9zZWxlY3Q+CiAgICAgICAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICAg",
+            "IDwvZGl2PgogICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tZ3JvdXAiPgogICAgICAg",
+            "ICAgICAgICAgICAgICAgICA8bGFiZWw+UmVhc29uIChvcHRpb25hbCwgb25seSBzaG93biB0byB5b3Up",
+            "PC9sYWJlbD4KICAgICAgICAgICAgICAgICAgICAgICAgPGlucHV0IHR5cGU9InRleHQiIGlkPSJiYW5S",
+            "ZWFzb25JbnB1dCIgcGxhY2Vob2xkZXI9InNjYW1tZWQgY3VzdG9tZXIgLyBjaGFyZ2ViYWNrIC8gc3Bh",
+            "bSI+CiAgICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPGJ1dHRvbiBj",
+            "bGFzcz0iY2hlY2tvdXQtYnRuIiBvbmNsaWNrPSJzYXZlQmFuKCkiPkFkZCB0byBsaXN0PC9idXR0b24+",
+            "CiAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgIDxoMyBzdHlsZT0ibWFyZ2luOiAy",
+            "cmVtIDAgMXJlbTsgZm9udC1zaXplOiAxLjEyNXJlbTsiPkFjdGl2ZSBsaXN0PC9oMz4KICAgICAgICAg",
+            "ICAgICAgIDxkaXYgc3R5bGU9Im92ZXJmbG93LXg6IGF1dG87Ij4KICAgICAgICAgICAgICAgICAgICA8",
+            "dGFibGUgY2xhc3M9ImFkbWluLXRhYmxlIj4KICAgICAgICAgICAgICAgICAgICAgICAgPHRoZWFkPgog",
+            "ICAgICAgICAgICAgICAgICAgICAgICAgICAgPHRyPgogICAgICAgICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgIDx0aD5BY2NvdW50PC90aD4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8dGg+QWN0",
+            "aW9uPC90aD4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8dGg+UmVhc29uPC90aD4KICAg",
+            "ICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8dGg+QWRkZWQ8L3RoPgogICAgICAgICAgICAgICAg",
+            "ICAgICAgICAgICAgICAgIDx0aD5BY3Rpb25zPC90aD4KICAgICAgICAgICAgICAgICAgICAgICAgICAg",
+            "IDwvdHI+CiAgICAgICAgICAgICAgICAgICAgICAgIDwvdGhlYWQ+CiAgICAgICAgICAgICAgICAgICAg",
+            "ICAgIDx0Ym9keSBpZD0iYWRtaW5CYW5zTGlzdCI+PC90Ym9keT4KICAgICAgICAgICAgICAgICAgICA8",
+            "L3RhYmxlPgogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAg",
+            "ICAgPCEtLSBEYXNoYm9hcmQgU2VjdGlvbiAtLT4KICAgICAgICAgICAgPGRpdiBjbGFzcz0icGFuZWwt",
+            "c2VjdGlvbiIgaWQ9InBhbmVsLWRhc2hib2FyZCI+CiAgICAgICAgICAgICAgICA8aDIgc3R5bGU9Im1h",
+            "cmdpbi1ib3R0b206IDFyZW07IGZvbnQtc2l6ZTogMS4yNXJlbTsiPlNhbGVzIERhc2hib2FyZDwvaDI+",
+            "CiAgICAgICAgICAgICAgICA8cCBzdHlsZT0iY29sb3I6IHZhcigtLXRleHQtc2Vjb25kYXJ5KTsgZm9u",
+            "dC1zaXplOiAwLjg3NXJlbTsgbWFyZ2luLWJvdHRvbTogMXJlbTsiPgogICAgICAgICAgICAgICAgICAg",
+            "IExpdmUgbnVtYmVycyBmcm9tIGNvbXBsZXRlZCBvcmRlcnMuIFVwZGF0ZXMgaW5zdGFudGx5IHdoZW4g",
+            "eW91IG1hcmsgb3JkZXJzIGNvbXBsZXRlLgogICAgICAgICAgICAgICAgPC9wPgogICAgICAgICAgICAg",
+            "ICAgPGRpdiBjbGFzcz0iZGFzaGJvYXJkLWdyaWQiIGlkPSJkYXNoYm9hcmRHcmlkIj48L2Rpdj4KICAg",
+            "ICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImRhc2hib2FyZC1zZWN0aW9uIj4KICAgICAgICAgICAgICAg",
+            "ICAgICA8aDM+VG9wIHNlbGxpbmcgaXRlbXM8L2gzPgogICAgICAgICAgICAgICAgICAgIDxkaXYgaWQ9",
+            "ImRhc2hib2FyZFRvcEl0ZW1zIj48L2Rpdj4KICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAg",
+            "ICAgICAgPGRpdiBjbGFzcz0iZGFzaGJvYXJkLXNlY3Rpb24iPgogICAgICAgICAgICAgICAgICAgIDxo",
+            "Mz5SZWNlbnQgYWN0aXZpdHk8L2gzPgogICAgICAgICAgICAgICAgICAgIDxkaXYgaWQ9ImRhc2hib2Fy",
+            "ZFJlY2VudCI+PC9kaXY+CiAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgIDxidXR0",
+            "b24gY2xhc3M9ImJ0biBidG4tLWdob3N0IGJ0bi0tc20iIG9uY2xpY2s9InJlbmRlckRhc2hib2FyZCgp",
+            "Ij4KICAgICAgICAgICAgICAgICAgICA8c3ZnIGNsYXNzPSJpY29uIiB2aWV3Qm94PSIwIDAgMjQgMjQi",
+            "IGFyaWEtaGlkZGVuPSJ0cnVlIj48cG9seWxpbmUgcG9pbnRzPSIyMyA0IDIzIDEwIDE3IDEwIj48L3Bv",
+            "bHlsaW5lPjxwYXRoIGQ9Ik0yMC40OSAxNWE5IDkgMCAxIDEtMi4xMi05LjM2TDIzIDEwIj48L3BhdGg+",
+            "PC9zdmc+CiAgICAgICAgICAgICAgICAgICAgPHNwYW4+UmVmcmVzaDwvc3Bhbj4KICAgICAgICAgICAg",
+            "ICAgIDwvYnV0dG9uPgogICAgICAgICAgICA8L2Rpdj4KICAgICAgICA8L2Rpdj4="
+        ].join('');
+        let __ownerPanelDecoded = '';
+        function __decodeOwnerPanel() {
+            if (__ownerPanelDecoded) return __ownerPanelDecoded;
+            try { __ownerPanelDecoded = atob(__OPC); } catch (e) { __ownerPanelDecoded = ''; }
+            return __ownerPanelDecoded;
+        }
         function __mountOwnerPanel() {
             const panel = document.getElementById('ownerPanel');
             if (!panel) return;
-            if (__ownerPanelHTML && !panel.firstChild) {
-                panel.innerHTML = __ownerPanelHTML;
-            }
+            if (!panel.firstChild) panel.innerHTML = __decodeOwnerPanel();
         }
         function __unmountOwnerPanel() {
             const panel = document.getElementById('ownerPanel');
@@ -4497,10 +4525,14 @@
             panel.innerHTML = '';
         }
         (function installOwnerPanelDefense() {
+            // Capture the native MutationObserver + setInterval references early,
+            // so console-side overrides like `MutationObserver=null` or
+            // `setInterval=function(){}` after page load can't disable defense.
+            const _MO = window.MutationObserver || window.WebKitMutationObserver;
+            const _setInterval = window.setInterval.bind(window);
             function install() {
                 const panel = document.getElementById('ownerPanel');
                 if (!panel) return;
-                if (!__ownerPanelHTML) __ownerPanelHTML = panel.innerHTML;
                 const enforce = function () {
                     if (isOwnerLoggedIn()) return; // legit owner: leave it alone
                     if (panel.classList.contains('active')) panel.classList.remove('active');
@@ -4511,15 +4543,17 @@
                 };
                 enforce(); // initial sweep
                 try {
-                    const obs = new MutationObserver(enforce);
-                    obs.observe(panel, {
-                        attributes: true,
-                        attributeFilter: ['class', 'style'],
-                        childList: true,
-                        subtree: false
-                    });
+                    if (_MO) {
+                        const obs = new _MO(enforce);
+                        obs.observe(panel, {
+                            attributes: true,
+                            attributeFilter: ['class', 'style'],
+                            childList: true,
+                            subtree: false
+                        });
+                    }
                 } catch (e) {}
-                setInterval(enforce, 250);
+                _setInterval(enforce, 200);
             }
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', install);
@@ -4530,8 +4564,8 @@
 
         // ===== Footer "Kick All Owners" button =====
         // Anyone can click the button, but the actual kick is gated by a code
-        // (currently 1211 — same hash as the password / verify code). Typing
-        // the code writes a fresh kick timestamp into Firestore meta/ownerKick.
+        // matching the verify-code hash (same hash as the password verifier).
+        // Typing the code writes a fresh kick timestamp into Firestore meta/ownerKick.
         // Every device listening (see __wireKickListener below) compares its
         // locally-stored seen-kick-time against that timestamp — if Firestore is
         // newer, the device wipes its owner session and closes the owner panel
