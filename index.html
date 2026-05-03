@@ -2891,7 +2891,6 @@
             <h2>Owner Access</h2>
             <input type="text" class="login-input" id="loginUser" placeholder="Username" autocomplete="off">
             <input type="password" class="login-input" id="loginPass" placeholder="Password" autocomplete="off">
-            <input type="password" class="login-input" id="loginVerify" placeholder="Verify code" autocomplete="off">
             <button class="login-btn" onclick="doLogin()">Login</button>
             <div class="login-error" id="loginError">Invalid credentials</div>
             <button onclick="closeLogin()" style="margin-top: 1rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.5rem 1rem; cursor: pointer; border-radius: 6px; font-family: inherit;">Cancel</button>
@@ -3028,11 +3027,11 @@
         // typed credentials. Slow by design — an attacker who reads the source
         // still has to expend ~100-200 ms of CPU per brute-force candidate
         // to recover any short input.
-        async function _computeOwnerToken(u, p, v) {
+        async function _computeOwnerToken(u, p) {
             const enc = new TextEncoder();
             const key = await crypto.subtle.importKey(
                 'raw',
-                enc.encode(String(u || '') + ':' + String(p || '') + ':' + String(v || '')),
+                enc.encode(String(u || '') + ':' + String(p || '')),
                 { name: 'PBKDF2' }, false, ['deriveBits']
             );
             const bits = await crypto.subtle.deriveBits(
@@ -4136,7 +4135,7 @@
         // strings never appear in the page source — Ctrl+F / view-source
         // turns up nothing that looks like an owner credential. The blob
         // is decoded once into _HSH at module init.
-        const _HBL = 'CEpFUmVUAhZdVztDCkANEGhBCkBQBRU6RQRGDQg7ElVDCUA9EwVGCVMSORAIRVgIZhBWSl1CahQGF1xRFTxCVUxbWGgUAlFEVi9UCVENVUJqEwcVUw9rT1ISXE1uFFcXWARCbxJVEFtXO0cHQl8QaRUGEgsFQDpCBEFbXG0UVUBbEGZAVUcLVkZqRFNCSUJ9ABFJShE6RAYWXlFIPkIIFQpaZkdRFwxEa0QDFwxUQGYSAEBaWTtAUEYJF2pGVkddBUBtRFMSWF07TwUVXBc5QAZBCgZSc1RaVlFMPRJQQA5EbU8CEVEASWoUUkwNX2xGBBVeF2dEBkQLCBU7FVJEWwo7QgdHXhJpEwYRCwkUORdXElxXOkRREAxGOlQfURoSSn1FBUBcVjpHVhdYRmtOVkRbCEZsRgFBD1tnEgJHWUJqRFFDWVNBbUFXEFkPbBRSRAlCPBVXQV4JQ2hHUkVYXW9GEV9KG31MERQbVxsvTgtFGF87Dl4cSgk=';
+        const _HBL = 'CEpFUmVUBkFaCjwXC0dZETxOABZYVhVqT1AWXFluQFIWDhY5T1ZBWQRJPkUEQllXOxcGRFFGaxMCRg0FFGsVVBVfCG8SAVFEVi9UCVFYA0Q5EFUXCV9uQVZDWhc+T1dBW1MVPRNSEAhWZxJQRFtHPEcEFVhUQmZOBkdYVzlBUEpcF2kVBRZfVBRpFQYWSUJ9ABFJSkRsQlUVDFMSbkcGEVtcPBcKF1pHPBNRFgtUE2dOVRdcXWwVAkQORDtECktfA0NmEAYXUlo8QFBFDUM7EgUQX1JSc1RaVlFMPRJQQA5EbU8CEVEASWoUUkwNX2xGBBVeF2dEBkQLCBU7FVJEWwo7QgdHXhJpEwYRCwkUORdXElxXOkRREAxGOlQfURoSSn0XB0JeXG9CA0teQz4SUEIKBxVqR1RMXg09RlERUUQ7EgVLXlJEPEAIQ1xWbkFWQ1lBaUJVRQxVR2hDVEFSXmgVEV9KG31MEUIYQ0AlGEROGV5nGFoASgk=';
         const _HKE = _SLT + _TSL_IN + _TSL_OUT; // composed from existing salts
         function __hxor(s, k) {
             let out = '';
@@ -4295,12 +4294,10 @@
             if (__loginInFlight) return; // prevent double-submit while PBKDF2 runs
             const userEl = document.getElementById('loginUser');
             const passEl = document.getElementById('loginPass');
-            const verifyEl = document.getElementById('loginVerify');
             const errEl = document.getElementById('loginError');
             const btnEl = document.querySelector('#loginOverlay .btn-primary');
             const user = userEl ? userEl.value : '';
             const pass = passEl ? passEl.value : '';
-            const verify = verifyEl ? verifyEl.value : '';
 
             __loginInFlight = true;
             const prevBtnLabel = btnEl ? btnEl.textContent : '';
@@ -4321,14 +4318,13 @@
 
             let credsOk = false;
             try {
-                const [a, b] = await Promise.all([_isOwnerCreds(user, pass), _isVerifyCode(verify)]);
-                credsOk = a && b;
+                credsOk = await _isOwnerCreds(user, pass);
             } catch (e) { credsOk = false; }
 
             if (credsOk) {
                 _resetLoginFailures();
                 try {
-                    const tok = await _computeOwnerToken(user, pass, verify);
+                    const tok = await _computeOwnerToken(user, pass);
                     _setOwnerToken(tok);
                     localStorage.removeItem('shopOwnerLoggedIn'); // legacy key, no longer used
                     // Stamp the moment of this login (signed — DevTools edits
@@ -4353,7 +4349,6 @@
                 applyMaintenanceUI(); // owner bypasses maintenance overlay
                 if (userEl) userEl.value = '';
                 if (passEl) passEl.value = '';
-                if (verifyEl) verifyEl.value = '';
                 if (errEl) errEl.style.display = 'none';
             } else {
                 const after = _recordLoginFailure();
