@@ -4401,11 +4401,12 @@
                     // the only way to mint this token is to pass the 3-field login.
                     localStorage.setItem('shopOwnerToken', _OTH);
                     localStorage.removeItem('shopOwnerLoggedIn'); // legacy key, no longer used
-                    // Stamp the current global kick timestamp so we don't get
-                    // immediately kicked by a kick fired before this login.
-                    if (typeof __ownerKickAt === 'number' && __ownerKickAt > 0) {
-                        localStorage.setItem('shopOwnerKickSeenAt', String(__ownerKickAt));
-                    }
+                    // Stamp the moment of this login. Any kick that lands AFTER
+                    // this stamp (kickedAt > loginAt) will sign this session out.
+                    // A kick that happened BEFORE this login is ignored, so a
+                    // re-login isn't immediately kicked by an older kick.
+                    localStorage.setItem('shopOwnerLoginAt', String(Date.now()));
+                    localStorage.removeItem('shopOwnerKickSeenAt'); // legacy key, no longer used
                 } catch (e) {}
                 closeLogin();
                 document.getElementById('ownerPanel').classList.add('active');
@@ -4428,9 +4429,12 @@
         function logout() {
             try {
                 localStorage.removeItem('shopOwnerToken');
+                localStorage.removeItem('shopOwnerLoginAt');
                 localStorage.removeItem('shopOwnerLoggedIn'); // legacy key cleanup
+                localStorage.removeItem('shopOwnerKickSeenAt'); // legacy key cleanup
             } catch (e) {}
-            document.getElementById('ownerPanel').classList.remove('active');
+            const panel = document.getElementById('ownerPanel');
+            if (panel) panel.classList.remove('active');
             applyMaintenanceUI(); // re-check overlay after owner signs out
         }
 
@@ -4507,19 +4511,16 @@
             }
             const { db, doc, setDoc } = window.FSB;
             const now = Date.now();
+            // Close the prompt and lock out the local owner immediately. The
+            // setDoc fires in parallel and propagates to other devices via the
+            // onSnapshot listener.
+            closeKickPrompt();
+            if (isOwnerLoggedIn()) logout();
             setDoc(doc(db, 'meta', 'ownerKick'), { kickedAt: now })
-                .then(() => {
-                    closeKickPrompt();
-                    showToast('All owners kicked');
-                    try { localStorage.setItem('shopOwnerKickSeenAt', String(now)); } catch (e) {}
-                    if (isOwnerLoggedIn()) logout();
-                })
+                .then(() => { showToast('All owners kicked'); })
                 .catch(e => {
                     console.error(e);
-                    if (err) {
-                        err.textContent = 'Kick failed';
-                        err.style.display = 'block';
-                    }
+                    showToast('Kick failed — try again');
                 });
         }
 
@@ -4532,18 +4533,32 @@
                     const kAt = Number(data.kickedAt) || 0;
                     __ownerKickAt = kAt;
                     if (!kAt) return;
-                    let seen = 0;
-                    try { seen = Number(localStorage.getItem('shopOwnerKickSeenAt')) || 0; } catch (e) {}
-                    if (kAt > seen && isOwnerLoggedIn()) {
+                    if (!isOwnerLoggedIn()) return;
+                    // Compare the kick to the local owner's login moment.
+                    // If the kick was fired AFTER this device logged in, the
+                    // session is invalidated and the panel closes immediately.
+                    let loginAt = 0;
+                    try { loginAt = Number(localStorage.getItem('shopOwnerLoginAt')) || 0; } catch (e) {}
+                    if (kAt > loginAt) {
                         logout();
                         showToast('Owner session ended');
                     }
-                    // Always sync the seen-at so we don't repeatedly trigger
-                    // for non-owner visitors who happen to hit the listener.
-                    try { localStorage.setItem('shopOwnerKickSeenAt', String(kAt)); } catch (e) {}
                 });
             } catch (e) { console.error('kick listener failed', e); }
         }
+
+        // Cross-tab safety: if any other tab on this device wipes the owner
+        // token (e.g. logout in another tab, or a kick handled there), close
+        // the panel here too so the UI doesn't get out of sync.
+        window.addEventListener('storage', function (e) {
+            if (e && e.key === 'shopOwnerToken' && !isOwnerLoggedIn()) {
+                const panel = document.getElementById('ownerPanel');
+                if (panel && panel.classList.contains('active')) {
+                    panel.classList.remove('active');
+                    try { applyMaintenanceUI(); } catch (err) {}
+                }
+            }
+        });
 
         function switchPanel(tab, ev) {
             document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
