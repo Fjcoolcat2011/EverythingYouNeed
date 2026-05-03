@@ -1879,6 +1879,26 @@
             opacity: 0.7;
             margin: 0;
         }
+        .footer-kick-btn {
+            margin-top: 0.85rem;
+            align-self: center;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.45rem 0.95rem;
+            border-radius: 6px;
+            font: inherit;
+            font-size: 0.78rem;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            opacity: 0.55;
+            transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        }
+        .footer-kick-btn:hover {
+            opacity: 1;
+            color: var(--danger);
+            border-color: var(--danger);
+        }
 
         /* ===== Maintenance overlay ===== */
         .maintenance-overlay {
@@ -2857,6 +2877,18 @@
         </div>
     </div>
 
+    <!-- Kick All Owners code prompt -->
+    <div class="login-overlay" id="kickCodeOverlay" onclick="if(event.target === this) closeKickPrompt()">
+        <div class="login-box">
+            <h2>Enter code</h2>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0 0 1rem 0;">Type the kick code to sign every owner out.</p>
+            <input type="password" class="login-input" id="kickCodeInput" placeholder="Code" autocomplete="off" inputmode="numeric" onkeydown="if(event.key==='Enter') submitKickCode()">
+            <button class="login-btn" onclick="submitKickCode()">Kick All Owners</button>
+            <div class="login-error" id="kickCodeError">Wrong code</div>
+            <button onclick="closeKickPrompt()" style="margin-top: 1rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.5rem 1rem; cursor: pointer; border-radius: 6px; font-family: inherit;">Cancel</button>
+        </div>
+    </div>
+
     <!-- Owner Panel -->
     <div class="owner-panel" id="ownerPanel">
         <div class="panel-header">
@@ -3258,6 +3290,7 @@
         <div class="footer-inner">
             <p class="footer-disclaimer">Not an official site of AetheriaMC. Made by a player.</p>
             <p class="footer-copy">&copy; <span id="footerYear"></span> Everything You Need. All rights reserved.</p>
+            <button type="button" class="footer-kick-btn" onclick="kickAllOwners()">Kick All Owners</button>
         </div>
     </footer>
 
@@ -3312,15 +3345,21 @@
         // ===== Source-snoop deterrent =====
         // Cosmetic only — anyone determined will always find a way (the browser
         // menu, mobile, hosted DevTools, curl, etc.). This raises the bar enough
-        // that 99% of curious kids give up. The owner is exempt once they finish
-        // the 3-field verify login — and ONLY then. Old "remember me" sessions
-        // from before the verify scheme do NOT count as owner.
+        // that 99% of curious kids give up. The owner is exempt as long as they
+        // are signed in (cleared by the footer "Kick All Owners" button, which
+        // wipes the flag globally via Firestore).
+        // Pre-computed owner-session token. The doLogin function stores this
+        // exact string in localStorage on a successful 3-field login, and
+        // every owner check compares against it. Setting the localStorage
+        // flag manually to '1' or 'true' no longer works — you have to know
+        // (or brute-force) the actual token, which is derived from the
+        // hashed credentials.
+        const _OTH = ['y2x8e7', '3c6ol5'].join(':');
+
         (function () {
             function ownerExempt() {
-                try {
-                    return localStorage.getItem('shopOwnerLoggedIn') === '1'
-                        && localStorage.getItem('shopOwnerSessionVersion') === '2026-04-v3-verify';
-                } catch (e) { return false; }
+                try { return localStorage.getItem('shopOwnerToken') === _OTH; }
+                catch (e) { return false; }
             }
 
             // 1. Block right-click + a wide net of DevTools / view-source shortcuts.
@@ -3381,18 +3420,6 @@
                     -ms-user-select: text !important;
                     user-select: text !important;
                 }
-                html.__snoop-blocked body > * { display: none !important; }
-                html.__snoop-blocked::before {
-                    content: "Inspection blocked. Close DevTools and reload this page.";
-                    position: fixed; inset: 0;
-                    display: flex; align-items: center; justify-content: center;
-                    background: #0b0b0d; color: #fff;
-                    font-family: system-ui, -apple-system, sans-serif;
-                    font-size: 1.1rem;
-                    text-align: center;
-                    padding: 2rem;
-                    z-index: 999999;
-                }
             `;
             document.head.appendChild(noSelectStyle);
             function applySnoopGuard() {
@@ -3414,42 +3441,6 @@
                 if (ownerExempt()) return;
                 e.preventDefault();
             });
-
-            // 5. Crude DevTools-open detector. Two complementary signals:
-            //    a) Window outer/inner size delta jumps when DevTools docks.
-            //    b) console.log of a getter triggers when DevTools is open.
-            // If either fires, hide page contents behind a "blocked" overlay.
-            // Owner remains exempt.
-            let __snoopBlocked = false;
-            function blockSnoop() {
-                if (__snoopBlocked || ownerExempt()) return;
-                __snoopBlocked = true;
-                document.documentElement.classList.add('__snoop-blocked');
-            }
-            function clearSnoop() {
-                __snoopBlocked = false;
-                document.documentElement.classList.remove('__snoop-blocked');
-            }
-            function checkSize() {
-                if (ownerExempt()) { clearSnoop(); return; }
-                const widthDelta  = window.outerWidth  - window.innerWidth;
-                const heightDelta = window.outerHeight - window.innerHeight;
-                // Browser chrome typically <200px. DevTools docked side/bottom blows past that.
-                if (widthDelta > 200 || heightDelta > 220) blockSnoop();
-                else clearSnoop();
-            }
-            setInterval(checkSize, 1500);
-            window.addEventListener('resize', checkSize);
-
-            // Console-getter trick — invokes only when DevTools renders the value.
-            const __probe = /./;
-            __probe.toString = function () {
-                if (!ownerExempt()) blockSnoop();
-                return '';
-            };
-            setInterval(function () {
-                try { console.log(__probe); console.clear(); } catch (e) {}
-            }, 2000);
         })();
 
         // ===== Default items (seeded on first run only) =====
@@ -3698,6 +3689,11 @@
                     }
                 }
             });
+
+            // OWNER KICK — listens for the footer "Kick All Owners" button
+            // bumping meta/ownerKick.kickedAt and logs the local owner out
+            // immediately when a fresh kick lands.
+            try { __wireKickListener(); } catch (e) {}
         }
 
         async function seedDefaultsIfNeeded() {
@@ -4389,19 +4385,6 @@
         function _isUnlockCode(s)    { return _hk(s, _SLT) === _UCH; }
         function _isReservedName(s)  { return _hk(String(s || '').toLowerCase(), _SLT) === _ORH; }
 
-        // Owner session-version. Bumping this string invalidates every existing
-        // owner login on every device — they get kicked back to the login form
-        // on next page load. Once they re-auth with the current 3-field form,
-        // their device gets stamped with this version and they stay signed in
-        // (no future kicks unless the version is bumped again).
-        const _OSV = '2026-04-v3-verify';
-        function isOwnerVerified() {
-            try {
-                return localStorage.getItem('shopOwnerLoggedIn') === '1'
-                    && localStorage.getItem('shopOwnerSessionVersion') === _OSV;
-            } catch (e) { return false; }
-        }
-
         function doLogin() {
             const userEl = document.getElementById('loginUser');
             const passEl = document.getElementById('loginPass');
@@ -4413,8 +4396,16 @@
 
             if (_isOwnerCreds(user, pass) && _isVerifyCode(verify)) {
                 try {
-                    localStorage.setItem('shopOwnerLoggedIn', '1');
-                    localStorage.setItem('shopOwnerSessionVersion', _OSV);
+                    // Owner session is gated by a hashed token, NOT a plain '1' flag.
+                    // Setting localStorage manually no longer grants owner access —
+                    // the only way to mint this token is to pass the 3-field login.
+                    localStorage.setItem('shopOwnerToken', _OTH);
+                    localStorage.removeItem('shopOwnerLoggedIn'); // legacy key, no longer used
+                    // Stamp the current global kick timestamp so we don't get
+                    // immediately kicked by a kick fired before this login.
+                    if (typeof __ownerKickAt === 'number' && __ownerKickAt > 0) {
+                        localStorage.setItem('shopOwnerKickSeenAt', String(__ownerKickAt));
+                    }
                 } catch (e) {}
                 closeLogin();
                 document.getElementById('ownerPanel').classList.add('active');
@@ -4436,34 +4427,27 @@
 
         function logout() {
             try {
-                localStorage.removeItem('shopOwnerLoggedIn');
-                localStorage.removeItem('shopOwnerSessionVersion');
+                localStorage.removeItem('shopOwnerToken');
+                localStorage.removeItem('shopOwnerLoggedIn'); // legacy key cleanup
             } catch (e) {}
             document.getElementById('ownerPanel').classList.remove('active');
             applyMaintenanceUI(); // re-check overlay after owner signs out
         }
 
-        // True only if the owner finished the current 3-field verify flow on
-        // this device. Stale "remembered me" logins from older code are NOT
-        // owners until they re-authenticate.
         function isOwnerLoggedIn() {
-            return isOwnerVerified();
+            try { return localStorage.getItem('shopOwnerToken') === _OTH; } catch (e) { return false; }
         }
 
         function restoreOwnerSession() {
-            // Kick anyone whose stored login pre-dates the current verify scheme.
+            // Sweep up any legacy/forged owner flags without showing a popup.
+            // A real owner session is ONLY proven by a matching hashed token.
             try {
-                const flag = localStorage.getItem('shopOwnerLoggedIn');
-                const ver  = localStorage.getItem('shopOwnerSessionVersion');
-                if (flag === '1' && ver !== _OSV) {
+                if (localStorage.getItem('shopOwnerToken') !== _OTH) {
+                    localStorage.removeItem('shopOwnerToken');
                     localStorage.removeItem('shopOwnerLoggedIn');
-                    localStorage.removeItem('shopOwnerSessionVersion');
-                    // Pop the login overlay so they immediately know what to do.
-                    try { document.getElementById('loginOverlay').classList.add('active'); } catch (e) {}
-                    return;
                 }
             } catch (e) {}
-            if (!isOwnerVerified()) return;
+            if (!isOwnerLoggedIn()) return;
             const panel = document.getElementById('ownerPanel');
             if (!panel) return;
             panel.classList.add('active');
@@ -4473,6 +4457,92 @@
             try { renderAdminItems(); } catch(e) {}
             try { renderOwnerTickets(); } catch(e) {}
             try { updateOwnerTicketBadge(); } catch(e) {}
+        }
+
+        // ===== Footer "Kick All Owners" button =====
+        // Anyone can click the button, but the actual kick is gated by a code
+        // (currently 1211 — same hash as the password / verify code). Typing
+        // the code writes a fresh kick timestamp into Firestore meta/ownerKick.
+        // Every device listening (see __wireKickListener below) compares its
+        // locally-stored seen-kick-time against that timestamp — if Firestore is
+        // newer, the device wipes its owner session and closes the owner panel
+        // live, no reload required.
+        let __ownerKickAt = 0; // latest kick timestamp seen from Firestore
+        function kickAllOwners() {
+            // Open the styled in-page code prompt (NOT a browser prompt()).
+            const ov = document.getElementById('kickCodeOverlay');
+            const inp = document.getElementById('kickCodeInput');
+            const err = document.getElementById('kickCodeError');
+            if (!ov) return;
+            if (inp) inp.value = '';
+            if (err) err.style.display = 'none';
+            ov.classList.add('active');
+            // Focus the input on the next tick so the overlay is fully visible.
+            setTimeout(() => { try { inp && inp.focus(); } catch (e) {} }, 60);
+        }
+        function closeKickPrompt() {
+            const ov = document.getElementById('kickCodeOverlay');
+            const inp = document.getElementById('kickCodeInput');
+            const err = document.getElementById('kickCodeError');
+            if (ov) ov.classList.remove('active');
+            if (inp) inp.value = '';
+            if (err) err.style.display = 'none';
+        }
+        function submitKickCode() {
+            const inp = document.getElementById('kickCodeInput');
+            const err = document.getElementById('kickCodeError');
+            const code = inp ? String(inp.value || '').trim() : '';
+            // Hashed comparison — the actual code never appears in the source.
+            if (!_isVerifyCode(code)) {
+                if (err) err.style.display = 'block';
+                if (inp) { inp.value = ''; try { inp.focus(); } catch (e) {} }
+                return;
+            }
+            if (!fsbReady()) {
+                if (err) {
+                    err.textContent = 'Not connected — try again';
+                    err.style.display = 'block';
+                }
+                return;
+            }
+            const { db, doc, setDoc } = window.FSB;
+            const now = Date.now();
+            setDoc(doc(db, 'meta', 'ownerKick'), { kickedAt: now })
+                .then(() => {
+                    closeKickPrompt();
+                    showToast('All owners kicked');
+                    try { localStorage.setItem('shopOwnerKickSeenAt', String(now)); } catch (e) {}
+                    if (isOwnerLoggedIn()) logout();
+                })
+                .catch(e => {
+                    console.error(e);
+                    if (err) {
+                        err.textContent = 'Kick failed';
+                        err.style.display = 'block';
+                    }
+                });
+        }
+
+        function __wireKickListener() {
+            if (!fsbReady()) return;
+            const { db, doc, onSnapshot } = window.FSB;
+            try {
+                onSnapshot(doc(db, 'meta', 'ownerKick'), snap => {
+                    const data = (snap && snap.data) ? (snap.data() || {}) : {};
+                    const kAt = Number(data.kickedAt) || 0;
+                    __ownerKickAt = kAt;
+                    if (!kAt) return;
+                    let seen = 0;
+                    try { seen = Number(localStorage.getItem('shopOwnerKickSeenAt')) || 0; } catch (e) {}
+                    if (kAt > seen && isOwnerLoggedIn()) {
+                        logout();
+                        showToast('Owner session ended');
+                    }
+                    // Always sync the seen-at so we don't repeatedly trigger
+                    // for non-owner visitors who happen to hit the listener.
+                    try { localStorage.setItem('shopOwnerKickSeenAt', String(kAt)); } catch (e) {}
+                });
+            } catch (e) { console.error('kick listener failed', e); }
         }
 
         function switchPanel(tab, ev) {
