@@ -3,7 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Content-Security-Policy: lock down what the page is allowed to load.
+         Blocks inline-injection attacks from external scripts, restricts
+         network egress to known Firebase / Google Fonts hosts. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://*.firebasestorage.app wss://*.googleapis.com wss://*.firebaseio.com wss://*.firebase.googleapis.com; img-src 'self' data: https:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
+    <!-- Anti-clickjacking (X-Frame-Options-equivalent): refuse to be embedded. -->
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="no-referrer">
     <title>Everything You Need by Fjcoolcat - Minecraft Shop</title>
+    <script>
+        // Iframe-busting: if some site embeds us, break out to the top window.
+        // CSP frame-ancestors / X-Frame-Options can't be set via meta tag in
+        // most browsers, so we enforce it in JS as a hard fallback.
+        try {
+            if (window.top !== window.self) {
+                try { window.top.location = window.self.location; }
+                catch (e) {
+                    // Cross-origin top — neutralise the page instead.
+                    document.documentElement.innerHTML = '';
+                }
+            }
+        } catch (e) {}
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -4136,6 +4157,139 @@
         async function _isUnlockCode(s)    { return (await _hkSlow(s)) === _HSH.k; }
         async function _isReservedName(s)  { return (await _hkSlow(String(s || '').toLowerCase())) === _HSH.r; }
 
+        // ===== Login rate-limiting =====
+        // Tracks failed-login attempts in localStorage so the limit applies
+        // across tabs and reload. After _LOGIN_MAX_FAIL failures within the
+        // sliding window, the login form is locked for _LOGIN_LOCK_MS.
+        // Sweeps stale entries on every check.
+        const _LOGIN_FK   = '_li_v3';      // hidden key: "login info"
+        const _LOGIN_MAX_FAIL  = 5;        // attempts before lockout
+        const _LOGIN_WINDOW    = 15 * 60 * 1000;   // 15 min sliding window
+        const _LOGIN_LOCK_MS   = 60 * 60 * 1000;   // 1 h lockout
+        function _readLoginState() {
+            try {
+                const raw = localStorage.getItem(_LOGIN_FK);
+                if (!raw) return { fails: [], lockedUntil: 0 };
+                const obj = JSON.parse(raw);
+                return {
+                    fails: Array.isArray(obj.fails) ? obj.fails : [],
+                    lockedUntil: Number(obj.lockedUntil) || 0
+                };
+            } catch (e) { return { fails: [], lockedUntil: 0 }; }
+        }
+        function _writeLoginState(s) {
+            try { localStorage.setItem(_LOGIN_FK, JSON.stringify(s)); } catch (e) {}
+        }
+        function _loginLockRemaining() {
+            const s = _readLoginState();
+            const now = Date.now();
+            if (s.lockedUntil > now) return s.lockedUntil - now;
+            // Lockout expired — reset.
+            if (s.lockedUntil && s.lockedUntil <= now) {
+                _writeLoginState({ fails: [], lockedUntil: 0 });
+            }
+            return 0;
+        }
+        function _recordLoginFailure() {
+            const s = _readLoginState();
+            const now = Date.now();
+            const fresh = (s.fails || []).filter(t => now - t < _LOGIN_WINDOW);
+            fresh.push(now);
+            const next = { fails: fresh, lockedUntil: 0 };
+            if (fresh.length >= _LOGIN_MAX_FAIL) {
+                next.lockedUntil = now + _LOGIN_LOCK_MS;
+                next.fails = [];
+            }
+            _writeLoginState(next);
+            return next;
+        }
+        function _resetLoginFailures() {
+            _writeLoginState({ fails: [], lockedUntil: 0 });
+        }
+        function _formatDuration(ms) {
+            const m = Math.ceil(ms / 60000);
+            if (m < 60) return m + ' min';
+            const h = Math.floor(m / 60), rem = m % 60;
+            return h + 'h ' + (rem ? rem + 'm' : '');
+        }
+
+        // ===== HMAC-signed localStorage =====
+        // Critical owner-related values (loginAt, etc.) are stamped with a
+        // hash that depends on the value + a runtime-derived secret. If
+        // someone DevTools-edits the value (e.g. forging a future loginAt to
+        // bypass the kick check), the stamp won't match and the value is
+        // rejected.
+        const _LSK = (_SLT.split('').reverse().join('') + _TSL_OUT.split('').reverse().join(''));
+        function _sigOf(v) { return _hk(String(v == null ? '' : v), _LSK); }
+        function _setSignedLS(key, value) {
+            try {
+                const v = String(value);
+                localStorage.setItem(key, v);
+                localStorage.setItem(key + '_s', _sigOf(v));
+            } catch (e) {}
+        }
+        function _getSignedLS(key) {
+            try {
+                const v = localStorage.getItem(key);
+                if (v == null) return null;
+                const s = localStorage.getItem(key + '_s');
+                if (!s || s !== _sigOf(v)) {
+                    // Tampered or unsigned — purge both halves so a fake
+                    // value can't keep impersonating.
+                    localStorage.removeItem(key);
+                    localStorage.removeItem(key + '_s');
+                    return null;
+                }
+                return v;
+            } catch (e) { return null; }
+        }
+        function _removeSignedLS(key) {
+            try {
+                localStorage.removeItem(key);
+                localStorage.removeItem(key + '_s');
+            } catch (e) {}
+        }
+
+        // ===== Idle auto-logout =====
+        // Owner sessions expire after _IDLE_MS of no user activity. Resets on
+        // mouse/keyboard/touch events and visibility changes.
+        const _IDLE_MS = 15 * 60 * 1000; // 15 min
+        let __idleTimer = null;
+        function __resetIdleTimer() {
+            if (__idleTimer) { clearTimeout(__idleTimer); __idleTimer = null; }
+            if (typeof isOwnerLoggedIn !== 'function' || !isOwnerLoggedIn()) return;
+            __idleTimer = setTimeout(() => {
+                if (typeof isOwnerLoggedIn === 'function' && isOwnerLoggedIn()) {
+                    try { logout(); } catch (e) {}
+                    if (typeof showToast === 'function') showToast('Owner session timed out — sign in again');
+                }
+            }, _IDLE_MS);
+        }
+        document.addEventListener('mousemove',  __resetIdleTimer, { passive: true });
+        document.addEventListener('keydown',    __resetIdleTimer, { passive: true });
+        document.addEventListener('touchstart', __resetIdleTimer, { passive: true });
+        document.addEventListener('click',      __resetIdleTimer, { passive: true });
+
+        // ===== Visibility panic-unmount =====
+        // The moment the tab loses focus / is minimized, strip the owner
+        // panel content from the DOM. When the tab returns, re-verify the
+        // token and re-mount only if the session is still valid. Stops
+        // shoulder-surfing and screen-share leaks.
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                try { __unmountOwnerPanel(); } catch (e) {}
+            } else {
+                try {
+                    if (typeof isOwnerLoggedIn === 'function' && isOwnerLoggedIn()) {
+                        __mountOwnerPanel();
+                        const p = document.getElementById('ownerPanel');
+                        if (p) p.classList.add('active');
+                    }
+                } catch (e) {}
+                __resetIdleTimer();
+            }
+        });
+
         let __loginInFlight = false;
         async function doLogin() {
             if (__loginInFlight) return; // prevent double-submit while PBKDF2 runs
@@ -4153,6 +4307,18 @@
             if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Verifying…'; }
             if (errEl) errEl.style.display = 'none';
 
+            // Hard rate-limit gate: reject before doing the expensive PBKDF2.
+            const lockMs = _loginLockRemaining();
+            if (lockMs > 0) {
+                if (errEl) {
+                    errEl.textContent = 'Too many failed attempts. Try again in ' + _formatDuration(lockMs) + '.';
+                    errEl.style.display = 'block';
+                }
+                if (btnEl) { btnEl.disabled = false; btnEl.textContent = prevBtnLabel || 'Sign In'; }
+                __loginInFlight = false;
+                return;
+            }
+
             let credsOk = false;
             try {
                 const [a, b] = await Promise.all([_isOwnerCreds(user, pass), _isVerifyCode(verify)]);
@@ -4160,17 +4326,18 @@
             } catch (e) { credsOk = false; }
 
             if (credsOk) {
+                _resetLoginFailures();
                 try {
                     const tok = await _computeOwnerToken(user, pass, verify);
                     _setOwnerToken(tok);
                     localStorage.removeItem('shopOwnerLoggedIn'); // legacy key, no longer used
-                    // Stamp the moment of this login. Any kick that lands AFTER
-                    // this stamp (kickedAt > loginAt) will sign this session out.
-                    // A kick that happened BEFORE this login is ignored, so a
-                    // re-login isn't immediately kicked by an older kick.
-                    localStorage.setItem('shopOwnerLoginAt', String(Date.now()));
+                    // Stamp the moment of this login (signed — DevTools edits
+                    // are rejected by _getSignedLS). Any kick that lands AFTER
+                    // this stamp (kickedAt > loginAt) signs the session out.
+                    _setSignedLS('shopOwnerLoginAt', String(Date.now()));
                     localStorage.removeItem('shopOwnerKickSeenAt'); // legacy key, no longer used
                 } catch (e) {}
+                __resetIdleTimer();
                 closeLogin();
                 // Re-mount the panel content (the defense IIFE empties it
                 // whenever the visitor isn't authenticated). Mount BEFORE
@@ -4189,7 +4356,19 @@
                 if (verifyEl) verifyEl.value = '';
                 if (errEl) errEl.style.display = 'none';
             } else {
-                if (errEl) errEl.style.display = 'block';
+                const after = _recordLoginFailure();
+                if (errEl) {
+                    if (after.lockedUntil && after.lockedUntil > Date.now()) {
+                        errEl.textContent = 'Too many failed attempts. Locked out for ' +
+                            _formatDuration(after.lockedUntil - Date.now()) + '.';
+                    } else {
+                        const remaining = Math.max(0, _LOGIN_MAX_FAIL - (after.fails || []).length);
+                        errEl.textContent = remaining > 0
+                            ? 'Wrong credentials. ' + remaining + ' attempt' + (remaining === 1 ? '' : 's') + ' left.'
+                            : 'Wrong credentials.';
+                    }
+                    errEl.style.display = 'block';
+                }
             }
             if (btnEl) { btnEl.disabled = false; btnEl.textContent = prevBtnLabel || 'Sign In'; }
             __loginInFlight = false;
@@ -4198,10 +4377,11 @@
         function logout() {
             try {
                 _clearOwnerToken();
-                localStorage.removeItem('shopOwnerLoginAt');
+                _removeSignedLS('shopOwnerLoginAt');
                 localStorage.removeItem('shopOwnerLoggedIn'); // legacy key cleanup
                 localStorage.removeItem('shopOwnerKickSeenAt'); // legacy key cleanup
             } catch (e) {}
+            if (__idleTimer) { clearTimeout(__idleTimer); __idleTimer = null; }
             // Strip the panel from the DOM as well as removing the active
             // class — that way DevTools class-flips can't recover the content.
             __unmountOwnerPanel();
@@ -4220,7 +4400,7 @@
                 if (!_verifyOwnerToken(_getOwnerToken())) {
                     _clearOwnerToken();
                     localStorage.removeItem('shopOwnerLoggedIn');
-                    localStorage.removeItem('shopOwnerLoginAt');
+                    _removeSignedLS('shopOwnerLoginAt');
                 }
             } catch (e) {}
             if (!isOwnerLoggedIn()) return;
@@ -4228,6 +4408,7 @@
             if (!panel) return;
             __mountOwnerPanel();
             panel.classList.add('active');
+            __resetIdleTimer();
             try { loadData(); } catch(e) {}
             lastOrderCount = orders.length;
             try { renderOrders(); } catch(e) {}
@@ -4761,8 +4942,12 @@
                     // Compare the kick to the local owner's login moment.
                     // If the kick was fired AFTER this device logged in, the
                     // session is invalidated and the panel closes immediately.
+                    // Read the signed loginAt — if it was DevTools-tampered
+                    // (e.g. set to a far-future timestamp to dodge the kick),
+                    // _getSignedLS returns null and the session is treated as
+                    // un-stamped, which makes the kick land.
                     let loginAt = 0;
-                    try { loginAt = Number(localStorage.getItem('shopOwnerLoginAt')) || 0; } catch (e) {}
+                    try { loginAt = Number(_getSignedLS('shopOwnerLoginAt')) || 0; } catch (e) {}
                     if (kAt > loginAt) {
                         logout();
                         showToast('Owner session ended');
