@@ -2991,22 +2991,89 @@
         // credentials at login time. To forge a session, an attacker would
         // have to either brute-force the credential preimages or brute-force
         // the token preimage of _OTH_HASH (both hash-preimage attacks).
-        const _TSL_IN  = ['tk', 'n_v2'].join('');
+        const _TSL_IN  = ['tk', 'n_v3'].join('');
         const _TSL_OUT = ['sh', 't_v3'].join('');
-        const _OTH_HASH = ['ybamgg', '1m23k3u'].join(':');
-
+        // _OTH_HASH lives inside the encrypted _HSH blob (decoded later) under
+        // the key 'o'. _verifyOwnerToken pulls it lazily so the literal hash
+        // never appears as a string in the source.
         function _verifyOwnerToken(tok) {
             if (!tok) return false;
-            try { return _hk(tok, _TSL_OUT) === _OTH_HASH; }
-            catch (e) { return false; }
+            try {
+                const expected = (typeof _HSH !== 'undefined' && _HSH) ? _HSH.o : '';
+                return !!expected && _hk(tok, _TSL_OUT) === expected;
+            } catch (e) { return false; }
         }
-        function _computeOwnerToken(u, p, v) {
-            return _hk(String(u || '') + ':' + String(p || '') + ':' + String(v || ''), _TSL_IN);
+        // Token is derived via PBKDF2-SHA256 (1,000,000 iterations) from the
+        // typed credentials. Slow by design — an attacker who reads the source
+        // still has to expend ~100-200 ms of CPU per brute-force candidate
+        // to recover any short input.
+        async function _computeOwnerToken(u, p, v) {
+            const enc = new TextEncoder();
+            const key = await crypto.subtle.importKey(
+                'raw',
+                enc.encode(String(u || '') + ':' + String(p || '') + ':' + String(v || '')),
+                { name: 'PBKDF2' }, false, ['deriveBits']
+            );
+            const bits = await crypto.subtle.deriveBits(
+                { name: 'PBKDF2', salt: enc.encode(_TSL_IN), iterations: 1000000, hash: 'SHA-256' },
+                key, 256
+            );
+            return Array.prototype.map
+                .call(new Uint8Array(bits), b => b.toString(16).padStart(2, '0'))
+                .join('');
+        }
+
+        // ===== Owner-token storage wrapper =====
+        // The token is NOT written to localStorage as a plain string under an
+        // obvious key like "shopOwnerToken" anymore. Instead it lives under an
+        // innocuous-looking key, and the value is XOR'd with a fixed key and
+        // base64-encoded. To DevTools/Application/Local Storage it just looks
+        // like an opaque preferences blob, not a recognisable owner session.
+        const _OTK_KEY = ['_si', '_v3'].join('');           // "site info v3" — looks like a generic app pref
+        const _OTK_LEGACY = 'shopOwnerToken';              // for one-time cleanup of older builds
+        const _OTK_XK  = ['sh0p', '_obscure', '_v1'].join('');
+        function _otkXor(s, k) {
+            let out = '';
+            for (let i = 0; i < s.length; i++) {
+                out += String.fromCharCode(s.charCodeAt(i) ^ k.charCodeAt(i % k.length));
+            }
+            return out;
+        }
+        function _setOwnerToken(tok) {
+            try {
+                const wrapped = btoa(_otkXor(String(tok || ''), _OTK_XK));
+                localStorage.setItem(_OTK_KEY, wrapped);
+                localStorage.removeItem(_OTK_LEGACY); // clean up any prior plain-text token
+            } catch (e) {}
+        }
+        function _getOwnerToken() {
+            try {
+                const wrapped = localStorage.getItem(_OTK_KEY);
+                if (wrapped) {
+                    return _otkXor(atob(wrapped), _OTK_XK);
+                }
+                // Backward-compat: if a previous build wrote the plain token
+                // under the legacy key, accept it once and re-wrap it under
+                // the new opaque key.
+                const legacy = localStorage.getItem(_OTK_LEGACY);
+                if (legacy) {
+                    if (_verifyOwnerToken(legacy)) {
+                        _setOwnerToken(legacy); // upgrades storage on read
+                        return legacy;
+                    }
+                    localStorage.removeItem(_OTK_LEGACY);
+                }
+            } catch (e) {}
+            return '';
+        }
+        function _clearOwnerToken() {
+            try { localStorage.removeItem(_OTK_KEY); } catch (e) {}
+            try { localStorage.removeItem(_OTK_LEGACY); } catch (e) {}
         }
 
         (function () {
             function ownerExempt() {
-                try { return _verifyOwnerToken(localStorage.getItem('shopOwnerToken')); }
+                try { return _verifyOwnerToken(_getOwnerToken()); }
                 catch (e) { return false; }
             }
 
@@ -4021,37 +4088,81 @@
             return ((a >>> 0).toString(36) + ':' + (b >>> 0).toString(36));
         }
         const _SLT = ['sh0p', '_v1'].join('');
-        // Pre-computed hash digests for sensitive credentials. Plaintexts are NOT
-        // present anywhere in the source — only their salted hashes.
-        const _OUH = ['pp3h0m',  '11zpm1w'].join(':'); // owner username
-        const _OPH = ['1i5t1o',  'de2wpc' ].join(':'); // owner password
-        const _OVH = ['1i5t1o',  'de2wpc' ].join(':'); // owner verify code (currently same string as password)
-        const _UCH = ['kt5413',  '2j0du9' ].join(':'); // maintenance unlock code
-        const _ORH = ['1it75s6', 'mjb8ck' ].join(':'); // reserved username
-        function _isOwnerCreds(u, p) { return _hk(u, _SLT) === _OUH && _hk(p, _SLT) === _OPH; }
-        function _isVerifyCode(v)    { return _hk(v, _SLT) === _OVH; }
-        function _isUnlockCode(s)    { return _hk(s, _SLT) === _UCH; }
-        function _isReservedName(s)  { return _hk(String(s || '').toLowerCase(), _SLT) === _ORH; }
+        // ===== Slow credential hash (PBKDF2-SHA256) =====
+        // Sensitive credential checks use PBKDF2-SHA256 at 1,000,000
+        // iterations — each guess costs ~100-200 ms in a modern browser.
+        // _hk is still used for non-sensitive runtime checks (token
+        // verification, where the input search space is already too large
+        // to brute-force).
+        const _PBK_ITER = 1000000;
+        async function _hkSlow(s) {
+            const enc = new TextEncoder();
+            const baseKey = await crypto.subtle.importKey(
+                'raw', enc.encode(String(s == null ? '' : s)),
+                { name: 'PBKDF2' }, false, ['deriveBits']
+            );
+            const bits = await crypto.subtle.deriveBits(
+                { name: 'PBKDF2', salt: enc.encode(_SLT), iterations: _PBK_ITER, hash: 'SHA-256' },
+                baseKey, 256
+            );
+            return Array.prototype.map
+                .call(new Uint8Array(bits), b => b.toString(16).padStart(2, '0'))
+                .join('');
+        }
+        // ===== Hidden credential digest blob =====
+        // All sensitive PBKDF2 digests live inside one base64 blob, XOR'd with
+        // a key derived from existing salts. The recognisable 64-char hex
+        // strings never appear in the page source — Ctrl+F / view-source
+        // turns up nothing that looks like an owner credential. The blob
+        // is decoded once into _HSH at module init.
+        const _HBL = 'CEpFUmVUAhZdVztDCkANEGhBCkBQBRU6RQRGDQg7ElVDCUA9EwVGCVMSORAIRVgIZhBWSl1CahQGF1xRFTxCVUxbWGgUAlFEVi9UCVENVUJqEwcVUw9rT1ISXE1uFFcXWARCbxJVEFtXO0cHQl8QaRUGEgsFQDpCBEFbXG0UVUBbEGZAVUcLVkZqRFNCSUJ9ABFJShE6RAYWXlFIPkIIFQpaZkdRFwxEa0QDFwxUQGYSAEBaWTtAUEYJF2pGVkddBUBtRFMSWF07TwUVXBc5QAZBCgZSc1RaVlFMPRJQQA5EbU8CEVEASWoUUkwNX2xGBBVeF2dEBkQLCBU7FVJEWwo7QgdHXhJpEwYRCwkUORdXElxXOkRREAxGOlQfURoSSn1FBUBcVjpHVhdYRmtOVkRbCEZsRgFBD1tnEgJHWUJqRFFDWVNBbUFXEFkPbBRSRAlCPBVXQV4JQ2hHUkVYXW9GEV9KG31MERQbVxsvTgtFGF87Dl4cSgk=';
+        const _HKE = _SLT + _TSL_IN + _TSL_OUT; // composed from existing salts
+        function __hxor(s, k) {
+            let out = '';
+            for (let i = 0; i < s.length; i++) {
+                out += String.fromCharCode(s.charCodeAt(i) ^ k.charCodeAt(i % k.length));
+            }
+            return out;
+        }
+        const _HSH = (function () {
+            try { return JSON.parse(__hxor(atob(_HBL), _HKE)); }
+            catch (e) { return {}; }
+        })();
+        async function _isOwnerCreds(u, p) {
+            const [hu, hp] = await Promise.all([_hkSlow(u), _hkSlow(p)]);
+            return hu === _HSH.u && hp === _HSH.p;
+        }
+        async function _isVerifyCode(v)    { return (await _hkSlow(v)) === _HSH.v; }
+        async function _isUnlockCode(s)    { return (await _hkSlow(s)) === _HSH.k; }
+        async function _isReservedName(s)  { return (await _hkSlow(String(s || '').toLowerCase())) === _HSH.r; }
 
-        function doLogin() {
+        let __loginInFlight = false;
+        async function doLogin() {
+            if (__loginInFlight) return; // prevent double-submit while PBKDF2 runs
             const userEl = document.getElementById('loginUser');
             const passEl = document.getElementById('loginPass');
             const verifyEl = document.getElementById('loginVerify');
             const errEl = document.getElementById('loginError');
+            const btnEl = document.querySelector('#loginOverlay .btn-primary');
             const user = userEl ? userEl.value : '';
             const pass = passEl ? passEl.value : '';
             const verify = verifyEl ? verifyEl.value : '';
 
-            if (_isOwnerCreds(user, pass) && _isVerifyCode(verify)) {
+            __loginInFlight = true;
+            const prevBtnLabel = btnEl ? btnEl.textContent : '';
+            if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Verifying…'; }
+            if (errEl) errEl.style.display = 'none';
+
+            let credsOk = false;
+            try {
+                const [a, b] = await Promise.all([_isOwnerCreds(user, pass), _isVerifyCode(verify)]);
+                credsOk = a && b;
+            } catch (e) { credsOk = false; }
+
+            if (credsOk) {
                 try {
-                    // Owner session is gated by a hashed token, NOT a plain '1' flag.
-                    // Setting localStorage manually no longer grants owner access —
-                    // the only way to mint this token is to pass the 3-field login.
-                    // Token is derived from the typed credentials and the inner
-                    // salt. Verifier hashes this with the outer salt and compares
-                    // to _OTH_HASH. Storing this in localStorage manually requires
-                    // either brute-forcing the cred preimages or the token preimage.
-                    localStorage.setItem('shopOwnerToken', _computeOwnerToken(user, pass, verify));
+                    const tok = await _computeOwnerToken(user, pass, verify);
+                    _setOwnerToken(tok);
                     localStorage.removeItem('shopOwnerLoggedIn'); // legacy key, no longer used
                     // Stamp the moment of this login. Any kick that lands AFTER
                     // this stamp (kickedAt > loginAt) will sign this session out.
@@ -4080,11 +4191,13 @@
             } else {
                 if (errEl) errEl.style.display = 'block';
             }
+            if (btnEl) { btnEl.disabled = false; btnEl.textContent = prevBtnLabel || 'Sign In'; }
+            __loginInFlight = false;
         }
 
         function logout() {
             try {
-                localStorage.removeItem('shopOwnerToken');
+                _clearOwnerToken();
                 localStorage.removeItem('shopOwnerLoginAt');
                 localStorage.removeItem('shopOwnerLoggedIn'); // legacy key cleanup
                 localStorage.removeItem('shopOwnerKickSeenAt'); // legacy key cleanup
@@ -4096,7 +4209,7 @@
         }
 
         function isOwnerLoggedIn() {
-            try { return _verifyOwnerToken(localStorage.getItem('shopOwnerToken')); }
+            try { return _verifyOwnerToken(_getOwnerToken()); }
             catch (e) { return false; }
         }
 
@@ -4104,8 +4217,8 @@
             // Sweep up any legacy/forged owner flags without showing a popup.
             // A real owner session is ONLY proven by a matching hashed token.
             try {
-                if (!_verifyOwnerToken(localStorage.getItem('shopOwnerToken'))) {
-                    localStorage.removeItem('shopOwnerToken');
+                if (!_verifyOwnerToken(_getOwnerToken())) {
+                    _clearOwnerToken();
                     localStorage.removeItem('shopOwnerLoggedIn');
                     localStorage.removeItem('shopOwnerLoginAt');
                 }
@@ -4591,16 +4704,28 @@
             if (inp) inp.value = '';
             if (err) err.style.display = 'none';
         }
-        function submitKickCode() {
+        let __kickInFlight = false;
+        async function submitKickCode() {
+            if (__kickInFlight) return;
             const inp = document.getElementById('kickCodeInput');
             const err = document.getElementById('kickCodeError');
+            const btn = document.querySelector('#kickCodeOverlay .btn-primary');
             const code = inp ? String(inp.value || '').trim() : '';
+            __kickInFlight = true;
+            const prevLabel = btn ? btn.textContent : '';
+            if (btn) { btn.disabled = true; btn.textContent = 'Verifying…'; }
             // Hashed comparison — the actual code never appears in the source.
-            if (!_isVerifyCode(code)) {
+            let ok = false;
+            try { ok = await _isVerifyCode(code); } catch (e) { ok = false; }
+            if (!ok) {
                 if (err) err.style.display = 'block';
                 if (inp) { inp.value = ''; try { inp.focus(); } catch (e) {} }
+                if (btn) { btn.disabled = false; btn.textContent = prevLabel || 'Confirm'; }
+                __kickInFlight = false;
                 return;
             }
+            if (btn) { btn.disabled = false; btn.textContent = prevLabel || 'Confirm'; }
+            __kickInFlight = false;
             if (!fsbReady()) {
                 if (err) {
                     err.textContent = 'Not connected — try again';
@@ -4650,7 +4775,8 @@
         // token (e.g. logout in another tab, or a kick handled there), close
         // the panel here too so the UI doesn't get out of sync.
         window.addEventListener('storage', function (e) {
-            if (e && e.key === 'shopOwnerToken' && !isOwnerLoggedIn()) {
+            // React to changes on either the new opaque key or the legacy key.
+            if (e && (e.key === _OTK_KEY || e.key === _OTK_LEGACY) && !isOwnerLoggedIn()) {
                 const panel = document.getElementById('ownerPanel');
                 if (panel && panel.classList.contains('active')) {
                     panel.classList.remove('active');
@@ -5988,19 +6114,35 @@ ${cust.other ? `<div style="margin-top:.4rem;">Note: ${escapeHtml(cust.other)}</
             w.document.close();
         }
 
-        function checkMaintenanceUnlock(input) {
+        // PBKDF2 takes ~100-500ms per check, so we debounce keystrokes:
+        // each keystroke resets a 350 ms timer, and only the final value runs
+        // through _isUnlockCode. Also skip very short inputs to avoid
+        // wasting CPU on obvious non-matches.
+        let __unlockTimer = null;
+        async function checkMaintenanceUnlock(input) {
             if (!input) return;
-            if (_isUnlockCode(input.value)) {
-                // Record unlock against the current maintenance.updatedAt value.
-                // sessionStorage: lost when the tab/browser closes.
-                // Tied to updatedAt: lost when owner toggles mode on/off.
-                sessionStorage.setItem('shopMaintenanceUnlockedAt', __maintenanceUpdatedAt || '');
-                // Also clean up any legacy permanent unlock from the previous build.
-                try { localStorage.removeItem('shopMaintenanceUnlocked'); } catch (e) {}
-                input.value = '';
-                applyMaintenanceUI();
-                showToast('Unlocked for this session');
-            }
+            if (__unlockTimer) { clearTimeout(__unlockTimer); __unlockTimer = null; }
+            const val = input.value;
+            if (!val || val.length < 4) return;
+            __unlockTimer = setTimeout(async () => {
+                __unlockTimer = null;
+                const current = input.value; // re-read in case user kept typing
+                if (!current || current.length < 4) return;
+                let ok = false;
+                try { ok = await _isUnlockCode(current); } catch (e) { ok = false; }
+                if (ok) __applyMaintenanceUnlockResult(input);
+            }, 350);
+        }
+        function __applyMaintenanceUnlockResult(input) {
+            // Record unlock against the current maintenance.updatedAt value.
+            // sessionStorage: lost when the tab/browser closes.
+            // Tied to updatedAt: lost when owner toggles mode on/off.
+            sessionStorage.setItem('shopMaintenanceUnlockedAt', __maintenanceUpdatedAt || '');
+            // Also clean up any legacy permanent unlock from the previous build.
+            try { localStorage.removeItem('shopMaintenanceUnlocked'); } catch (e) {}
+            input.value = '';
+            applyMaintenanceUI();
+            showToast('Unlocked for this session');
         }
 
         // ===== Export / Import (Firestore-backed) =====
@@ -6365,7 +6507,7 @@ ${cust.other ? `<div style="margin-top:.4rem;">Note: ${escapeHtml(cust.other)}</
             document.getElementById('acctPanel-signup').style.display = tab === 'signup' ? 'block' : 'none';
             document.getElementById('acctError').textContent = '';
         }
-        function acctSignup() {
+        async function acctSignup() {
             const u = document.getElementById('acctSignupUser').value.trim();
             const p = document.getElementById('acctSignupPass').value;
             const p2 = document.getElementById('acctSignupPass2').value;
@@ -6375,7 +6517,9 @@ ${cust.other ? `<div style="margin-top:.4rem;">Note: ${escapeHtml(cust.other)}</
             if (u.length < 3) { err.textContent = 'Username must be at least 3 characters'; return; }
             if (p.length < 4) { err.textContent = 'Password must be at least 4 characters'; return; }
             if (p !== p2) { err.textContent = 'Passwords do not match'; return; }
-            if (_isReservedName(u)) { err.textContent = 'That username is reserved'; return; }
+            let reserved = false;
+            try { reserved = await _isReservedName(u); } catch (e) {}
+            if (reserved) { err.textContent = 'That username is reserved'; return; }
             if (!fsbReady()) { err.textContent = 'Not connected — try again in a moment'; return; }
             const users = getUsers();
             if (users.some(x => x.username.toLowerCase() === u.toLowerCase())) {
