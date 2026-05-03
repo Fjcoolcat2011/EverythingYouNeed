@@ -2416,8 +2416,8 @@
             color: var(--text-secondary);
             font-variant-numeric: tabular-nums;
         }
-        /* ===== IP bans + warns admin styling ===== */
-        .ip-badge {
+        /* ===== Account bans + warns admin styling ===== */
+        .account-badge {
             display: inline-block;
             padding: 0.15rem 0.55rem;
             background: rgba(74,158,255,0.12);
@@ -2447,8 +2447,6 @@
             color: var(--warning, #f59e0b);
             border: 1px solid rgba(245,158,11,0.35);
         }
-        .order-ip-line { grid-column: 1 / -1; }
-        .order-ip-line .hint { font-weight: 400; opacity: 0.7; font-size: 0.72rem; margin-left: 0.25rem; }
 
         /* ===== Customer reviews ===== */
         .item-rating {
@@ -2850,8 +2848,9 @@
     <div class="login-overlay" id="loginOverlay" onclick="if(event.target === this) closeLogin()">
         <div class="login-box">
             <h2>Owner Access</h2>
-            <input type="text" class="login-input" id="loginUser" placeholder="Username">
-            <input type="password" class="login-input" id="loginPass" placeholder="Password">
+            <input type="text" class="login-input" id="loginUser" placeholder="Username" autocomplete="off">
+            <input type="password" class="login-input" id="loginPass" placeholder="Password" autocomplete="off">
+            <input type="password" class="login-input" id="loginVerify" placeholder="Verify code" autocomplete="off">
             <button class="login-btn" onclick="doLogin()">Login</button>
             <div class="login-error" id="loginError">Invalid credentials</div>
             <button onclick="closeLogin()" style="margin-top: 1rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.5rem 1rem; cursor: pointer; border-radius: 6px; font-family: inherit;">Cancel</button>
@@ -3161,14 +3160,14 @@
             <!-- Bans Section -->
             <div class="panel-section" id="panel-bans">
                 <div class="admin-form">
-                    <h3>Ban or Warn an IP</h3>
+                    <h3>Ban or Warn an account</h3>
                     <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">
-                        <strong style="color:var(--danger)">Ban</strong> blocks the address from placing orders, signing up, or signing in. <strong style="color:var(--warning)">Warn</strong> still lets them order but shows a warning toast every visit. Heads-up: people on the same Wi-Fi share an IP, so banning one can affect their housemates / classmates.
+                        <strong style="color:var(--danger)">Ban</strong> blocks the account from placing orders, creating that username, or signing in. <strong style="color:var(--warning)">Warn</strong> still lets them order but shows a warning toast every visit. Usernames are case-insensitive (so <code>SteveX</code> and <code>stevex</code> are treated the same).
                     </p>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>IP address *</label>
-                            <input type="text" id="banIpInput" placeholder="e.g. 73.142.18.50" maxlength="64">
+                            <label>Account / username *</label>
+                            <input type="text" id="banAccountInput" placeholder="e.g. SteveX" maxlength="64">
                         </div>
                         <div class="form-group">
                             <label>Action *</label>
@@ -3189,7 +3188,7 @@
                     <table class="admin-table">
                         <thead>
                             <tr>
-                                <th>IP</th>
+                                <th>Account</th>
                                 <th>Action</th>
                                 <th>Reason</th>
                                 <th>Added</th>
@@ -3310,32 +3309,147 @@
     </script>
 
     <script>
-        // ===== Casual source-snoop deterrent =====
-        // Cosmetic only. A determined user can always bypass this from the
-        // browser menu — but it stops 95% of curious kids who hit F12 / right-click
-        // / Ctrl+U. The owner is exempt so they can still inspect their own shop.
+        // ===== Source-snoop deterrent =====
+        // Cosmetic only — anyone determined will always find a way (the browser
+        // menu, mobile, hosted DevTools, curl, etc.). This raises the bar enough
+        // that 99% of curious kids give up. The owner is exempt once they finish
+        // the 3-field verify login — and ONLY then. Old "remember me" sessions
+        // from before the verify scheme do NOT count as owner.
         (function () {
             function ownerExempt() {
-                try { return localStorage.getItem('shopOwnerLoggedIn') === '1'; } catch (e) { return false; }
+                try {
+                    return localStorage.getItem('shopOwnerLoggedIn') === '1'
+                        && localStorage.getItem('shopOwnerSessionVersion') === '2026-04-v3-verify';
+                } catch (e) { return false; }
             }
+
+            // 1. Block right-click + a wide net of DevTools / view-source shortcuts.
             window.addEventListener('contextmenu', function (e) {
                 if (ownerExempt()) return;
                 e.preventDefault();
             });
             window.addEventListener('keydown', function (e) {
                 if (ownerExempt()) return;
-                const k = e.key, ctrl = e.ctrlKey || e.metaKey, shift = e.shiftKey;
+                const k = e.key, ctrl = e.ctrlKey || e.metaKey, shift = e.shiftKey, alt = e.altKey;
+                // Don't interfere with normal typing inside form fields.
+                const t = e.target, tag = t && t.tagName;
+                const inField = tag === 'INPUT' || tag === 'TEXTAREA' || (t && t.isContentEditable);
                 // F12 — DevTools
                 if (k === 'F12') { e.preventDefault(); return; }
                 // Ctrl+Shift+I / J / C — DevTools / Console / Inspector
-                if (ctrl && shift && (k === 'I' || k === 'i' || k === 'J' || k === 'j' || k === 'C' || k === 'c')) {
-                    e.preventDefault(); return;
-                }
+                if (ctrl && shift && /^[ijcIJC]$/.test(k)) { e.preventDefault(); return; }
                 // Ctrl+U — view source
-                if (ctrl && (k === 'u' || k === 'U')) { e.preventDefault(); return; }
-                // Ctrl+S — save page (also leaks source)
-                if (ctrl && (k === 's' || k === 'S')) { e.preventDefault(); return; }
+                if (ctrl && /^[uU]$/.test(k)) { e.preventDefault(); return; }
+                // Ctrl+Shift+K — Firefox console
+                if (ctrl && shift && /^[kK]$/.test(k)) { e.preventDefault(); return; }
+                // Cmd+Opt+I / J / C / U — Mac DevTools / view-source
+                if (alt && /^[ijcIJCuU]$/.test(k)) { e.preventDefault(); return; }
+                // The next ones still leak source if used on the page itself, but
+                // we let them through inside form fields so customers can type
+                // / paste / select normally.
+                if (inField) return;
+                // Ctrl+S — save page
+                if (ctrl && /^[sS]$/.test(k)) { e.preventDefault(); return; }
+                // Ctrl+P — print to PDF
+                if (ctrl && /^[pP]$/.test(k)) { e.preventDefault(); return; }
+                // Ctrl+A — select all (precondition for copy-the-page)
+                if (ctrl && /^[aA]$/.test(k)) { e.preventDefault(); return; }
             });
+
+            // 2. Middle-click / shift-click "open in new tab" on links can leak
+            // the URL bar trick `view-source:`. Block opening links into source view.
+            window.addEventListener('auxclick', function (e) {
+                if (ownerExempt()) return;
+                if (e.button === 1) e.preventDefault(); // middle click
+            });
+
+            // 3. Disable text selection + drag for non-owners. Prevents the
+            // "select then drag into a new window" trick and discourages copy-paste.
+            const noSelectStyle = document.createElement('style');
+            noSelectStyle.id = '__noSelectStyle';
+            noSelectStyle.textContent = `
+                html.__no-snoop, html.__no-snoop body, html.__no-snoop * {
+                    -webkit-user-select: none !important;
+                    -moz-user-select: none !important;
+                    -ms-user-select: none !important;
+                    user-select: none !important;
+                    -webkit-touch-callout: none !important;
+                }
+                html.__no-snoop input, html.__no-snoop textarea, html.__no-snoop [contenteditable="true"] {
+                    -webkit-user-select: text !important;
+                    -moz-user-select: text !important;
+                    -ms-user-select: text !important;
+                    user-select: text !important;
+                }
+                html.__snoop-blocked body > * { display: none !important; }
+                html.__snoop-blocked::before {
+                    content: "Inspection blocked. Close DevTools and reload this page.";
+                    position: fixed; inset: 0;
+                    display: flex; align-items: center; justify-content: center;
+                    background: #0b0b0d; color: #fff;
+                    font-family: system-ui, -apple-system, sans-serif;
+                    font-size: 1.1rem;
+                    text-align: center;
+                    padding: 2rem;
+                    z-index: 999999;
+                }
+            `;
+            document.head.appendChild(noSelectStyle);
+            function applySnoopGuard() {
+                if (ownerExempt()) {
+                    document.documentElement.classList.remove('__no-snoop');
+                } else {
+                    document.documentElement.classList.add('__no-snoop');
+                }
+            }
+            applySnoopGuard();
+            // Re-evaluate when login state changes (storage events fire across tabs;
+            // we also poll briefly so the same-tab login flips the class instantly).
+            window.addEventListener('storage', applySnoopGuard);
+            setInterval(applySnoopGuard, 1000);
+
+            // 4. Block dragging images / nodes (you can drag content out into a new
+            // tab to bypass right-click on some browsers).
+            window.addEventListener('dragstart', function (e) {
+                if (ownerExempt()) return;
+                e.preventDefault();
+            });
+
+            // 5. Crude DevTools-open detector. Two complementary signals:
+            //    a) Window outer/inner size delta jumps when DevTools docks.
+            //    b) console.log of a getter triggers when DevTools is open.
+            // If either fires, hide page contents behind a "blocked" overlay.
+            // Owner remains exempt.
+            let __snoopBlocked = false;
+            function blockSnoop() {
+                if (__snoopBlocked || ownerExempt()) return;
+                __snoopBlocked = true;
+                document.documentElement.classList.add('__snoop-blocked');
+            }
+            function clearSnoop() {
+                __snoopBlocked = false;
+                document.documentElement.classList.remove('__snoop-blocked');
+            }
+            function checkSize() {
+                if (ownerExempt()) { clearSnoop(); return; }
+                const widthDelta  = window.outerWidth  - window.innerWidth;
+                const heightDelta = window.outerHeight - window.innerHeight;
+                // Browser chrome typically <200px. DevTools docked side/bottom blows past that.
+                if (widthDelta > 200 || heightDelta > 220) blockSnoop();
+                else clearSnoop();
+            }
+            setInterval(checkSize, 1500);
+            window.addEventListener('resize', checkSize);
+
+            // Console-getter trick — invokes only when DevTools renders the value.
+            const __probe = /./;
+            __probe.toString = function () {
+                if (!ownerExempt()) blockSnoop();
+                return '';
+            };
+            setInterval(function () {
+                try { console.log(__probe); console.clear(); } catch (e) {}
+            }, 2000);
         })();
 
         // ===== Default items (seeded on first run only) =====
@@ -3410,7 +3524,7 @@
         let __presenceTimer = null;
         let __countdownTimer = null;
         let __ownerNotesTimer = {};      // per-orderId debounce for blur saves
-        let __bans = [];                 // [{ ip, action: 'ban'|'warn', reason, createdAt }]
+        let __bans = [];                 // [{ account, action: 'ban'|'warn', reason, createdAt }]
         let __reviews = [];              // [{ id, itemId, itemName, account, rating, text, createdAt, hidden }]
         let __lowStockSeen = {};         // per-item: last amount we toasted at, so we don't spam
         let __warnToastShownThisSession = false;
@@ -3537,14 +3651,14 @@
                 }
             });
 
-            // BANS — IP-keyed list (doc id = ip). Keeps a local map so we can
-            // block placeOrder/signin/signup synchronously without a round-trip.
+            // BANS — account-keyed list (doc id = lowercased username). Keeps a
+            // local map so placeOrder / signin / signup can check synchronously.
             onSnapshot(collection(db, 'bans'), snap => {
                 __bans = snap.docs.map(d => d.data() || {})
-                    .filter(b => b && b.ip)
+                    .filter(b => b && b.account)
                     .sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
                 try { renderAdminBans(); } catch(e) {}
-                // If THIS visitor just got warned, show them a single toast per session.
+                // If the currently signed-in account is warned, toast them once.
                 try { maybeShowWarnToast(); } catch(e) {}
             });
 
@@ -3611,16 +3725,6 @@
             // cart stays in localStorage (per-device)
             cart = JSON.parse(localStorage.getItem('shopCart') || '[]');
             restoreAppliedDiscount();
-            // Resolve the visitor's public IP early so it's cached by the time
-            // they place an order or open the side Order Status panel. Failures
-            // are non-fatal — the panel falls back to the per-device id.
-            fetchVisitorIp().then(() => {
-                try { updateOrderStatusFabBadge(); } catch(e) {}
-                const ov = document.getElementById('orderStatusOverlay');
-                if (ov && ov.classList.contains('active')) {
-                    try { renderOrderStatusPanel(); } catch(e) {}
-                }
-            });
             setupFirestoreListeners();
             renderItems();
             updateCartCount();
@@ -4006,9 +4110,9 @@
         }
 
         function placeOrder() {
-            // IP ban check — blocked addresses can't place orders.
+            // Account ban check — banned accounts can't place orders.
             if (isVisitorBlocked()) {
-                showToast('Sorry, this address is blocked from placing orders.');
+                showToast('Sorry, this account is blocked from placing orders.');
                 return;
             }
             const mcUser = document.getElementById('mcUsername').value.trim();
@@ -4043,10 +4147,8 @@
                     dimension: dimension,
                     other: other,
                     account: getCurrentUser() || null,
-                    // Tag the order with the visitor's public IP + a per-device id
-                    // so the side "Order Status" panel can find it on later visits
-                    // without requiring sign-in.
-                    ip: getCachedIp(),
+                    // Tag with a stable per-device id so the side "My orders"
+                    // panel can find this order on later visits without sign-in.
                     deviceId: getDeviceId()
                 },
                 status: 'pending',
@@ -4275,22 +4377,45 @@
             return ((a >>> 0).toString(36) + ':' + (b >>> 0).toString(36));
         }
         const _SLT = ['sh0p', '_v1'].join('');
-        // Four pre-computed hash digests below. The plaintext was stripped from
-        // this comment intentionally — no source-readable hint left.
-        const _OUH = ['12di8ic', 'o083yo' ].join(':');
-        const _OPH = ['1i5t1o',  'de2wpc' ].join(':');
-        const _UCH = ['kt5413',  '2j0du9' ].join(':');
-        const _ORH = ['wsj2r8',  '19m7e5s'].join(':');
+        // Pre-computed hash digests for sensitive credentials. Plaintexts are NOT
+        // present anywhere in the source — only their salted hashes.
+        const _OUH = ['12di8ic', 'o083yo' ].join(':'); // owner username
+        const _OPH = ['1i5t1o',  'de2wpc' ].join(':'); // owner password
+        const _OVH = ['1i5t1o',  'de2wpc' ].join(':'); // owner verify code (currently same string as password)
+        const _UCH = ['kt5413',  '2j0du9' ].join(':'); // maintenance unlock code
+        const _ORH = ['wsj2r8',  '19m7e5s'].join(':'); // reserved username
         function _isOwnerCreds(u, p) { return _hk(u, _SLT) === _OUH && _hk(p, _SLT) === _OPH; }
+        function _isVerifyCode(v)    { return _hk(v, _SLT) === _OVH; }
         function _isUnlockCode(s)    { return _hk(s, _SLT) === _UCH; }
         function _isReservedName(s)  { return _hk(String(s || '').toLowerCase(), _SLT) === _ORH; }
 
-        function doLogin() {
-            const user = document.getElementById('loginUser').value;
-            const pass = document.getElementById('loginPass').value;
+        // Owner session-version. Bumping this string invalidates every existing
+        // owner login on every device — they get kicked back to the login form
+        // on next page load. Once they re-auth with the current 3-field form,
+        // their device gets stamped with this version and they stay signed in
+        // (no future kicks unless the version is bumped again).
+        const _OSV = '2026-04-v3-verify';
+        function isOwnerVerified() {
+            try {
+                return localStorage.getItem('shopOwnerLoggedIn') === '1'
+                    && localStorage.getItem('shopOwnerSessionVersion') === _OSV;
+            } catch (e) { return false; }
+        }
 
-            if (_isOwnerCreds(user, pass)) {
-                localStorage.setItem('shopOwnerLoggedIn', '1');
+        function doLogin() {
+            const userEl = document.getElementById('loginUser');
+            const passEl = document.getElementById('loginPass');
+            const verifyEl = document.getElementById('loginVerify');
+            const errEl = document.getElementById('loginError');
+            const user = userEl ? userEl.value : '';
+            const pass = passEl ? passEl.value : '';
+            const verify = verifyEl ? verifyEl.value : '';
+
+            if (_isOwnerCreds(user, pass) && _isVerifyCode(verify)) {
+                try {
+                    localStorage.setItem('shopOwnerLoggedIn', '1');
+                    localStorage.setItem('shopOwnerSessionVersion', _OSV);
+                } catch (e) {}
                 closeLogin();
                 document.getElementById('ownerPanel').classList.add('active');
                 loadData(); // Refresh data
@@ -4300,25 +4425,45 @@
                 renderOwnerTickets();
                 updateOwnerTicketBadge();
                 applyMaintenanceUI(); // owner bypasses maintenance overlay
-                document.getElementById('loginUser').value = '';
-                document.getElementById('loginPass').value = '';
+                if (userEl) userEl.value = '';
+                if (passEl) passEl.value = '';
+                if (verifyEl) verifyEl.value = '';
+                if (errEl) errEl.style.display = 'none';
             } else {
-                document.getElementById('loginError').style.display = 'block';
+                if (errEl) errEl.style.display = 'block';
             }
         }
 
         function logout() {
-            localStorage.removeItem('shopOwnerLoggedIn');
+            try {
+                localStorage.removeItem('shopOwnerLoggedIn');
+                localStorage.removeItem('shopOwnerSessionVersion');
+            } catch (e) {}
             document.getElementById('ownerPanel').classList.remove('active');
             applyMaintenanceUI(); // re-check overlay after owner signs out
         }
 
+        // True only if the owner finished the current 3-field verify flow on
+        // this device. Stale "remembered me" logins from older code are NOT
+        // owners until they re-authenticate.
         function isOwnerLoggedIn() {
-            return localStorage.getItem('shopOwnerLoggedIn') === '1';
+            return isOwnerVerified();
         }
 
         function restoreOwnerSession() {
-            if (!isOwnerLoggedIn()) return;
+            // Kick anyone whose stored login pre-dates the current verify scheme.
+            try {
+                const flag = localStorage.getItem('shopOwnerLoggedIn');
+                const ver  = localStorage.getItem('shopOwnerSessionVersion');
+                if (flag === '1' && ver !== _OSV) {
+                    localStorage.removeItem('shopOwnerLoggedIn');
+                    localStorage.removeItem('shopOwnerSessionVersion');
+                    // Pop the login overlay so they immediately know what to do.
+                    try { document.getElementById('loginOverlay').classList.add('active'); } catch (e) {}
+                    return;
+                }
+            } catch (e) {}
+            if (!isOwnerVerified()) return;
             const panel = document.getElementById('ownerPanel');
             if (!panel) return;
             panel.classList.add('active');
@@ -4508,8 +4653,7 @@
                         <div class="order-detail-item"><strong>Discord</strong>${escapeHtml(discord)}</div>
                         <div class="order-detail-item"><strong>Coords</strong>${escapeHtml(coords)}</div>
                         <div class="order-detail-item"><strong>Dimension</strong>${escapeHtml(dimension)}</div>
-                        <div class="order-detail-item"><strong>Total Items</strong>${totalQty}</div>
-                        <div class="order-detail-item order-ip-line"><strong>IP <span class="hint">(owner only)</span></strong>${cust.ip ? `<span class="ip-badge">${escapeHtml(cust.ip)}</span> <button class="btn btn--ghost btn--sm" style="padding:0.25rem 0.5rem; font-size:0.75rem; margin-left:0.4rem;" onclick="quickBanIp(${JSON.stringify(cust.ip)})">Ban / warn</button>` : '<span style="opacity:0.6;">not recorded</span>'}</div>
+                        <div class="order-detail-item"><strong>Total Items</strong>${totalQty}${cust.account ? ` <button class="btn btn--ghost btn--sm" style="padding:0.2rem 0.5rem; font-size:0.7rem; margin-left:0.4rem;" onclick="quickBanAccount(${JSON.stringify(cust.account)})">Ban / warn account</button>` : ''}</div>
                     </div>
                     ${otherNote ? `<div style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 6px; margin-top: 0.75rem; font-size: 0.875rem; color: var(--text-secondary);"><strong style="color: var(--text-primary);">Note:</strong> ${escapeHtml(otherNote)}</div>` : ''}
                     <div class="order-items-list">
@@ -5322,23 +5466,30 @@
             }
         }
 
-        // ===== IP bans + warnings =====
-        // Doc id = ip. Local list __bans.
-        function findBanByIp(ip) {
-            if (!ip) return null;
-            return (__bans || []).find(b => String(b.ip) === String(ip)) || null;
+        // ===== Account bans + warnings =====
+        // Doc id = lowercased account name. Local list __bans.
+        // Lookups are case-insensitive (so SteveX and stevex match the same record).
+        function findBanForAccount(account) {
+            if (!account) return null;
+            const key = String(account).toLowerCase();
+            return (__bans || []).find(b => String(b.account || '').toLowerCase() === key) || null;
         }
+        function isAccountBanned(account)  { const b = findBanForAccount(account); return !!(b && b.action === 'ban'); }
+        function isAccountWarned(account)  { const b = findBanForAccount(account); return !!(b && b.action === 'warn'); }
+        // The currently signed-in user (if any) is the visitor we check at runtime.
         function isVisitorBlocked() {
-            const b = findBanByIp(getCachedIp());
-            return !!(b && b.action === 'ban');
+            const u = (typeof getCurrentUser === 'function') ? getCurrentUser() : '';
+            return !!u && isAccountBanned(u);
         }
         function isVisitorWarned() {
-            const b = findBanByIp(getCachedIp());
-            return !!(b && b.action === 'warn');
+            const u = (typeof getCurrentUser === 'function') ? getCurrentUser() : '';
+            return !!u && isAccountWarned(u);
         }
         function maybeShowWarnToast() {
             if (__warnToastShownThisSession) return;
-            const b = findBanByIp(getCachedIp());
+            const u = (typeof getCurrentUser === 'function') ? getCurrentUser() : '';
+            if (!u) return;
+            const b = findBanForAccount(u);
             if (!b || b.action !== 'warn') return;
             __warnToastShownThisSession = true;
             const reason = b.reason ? ` · ${b.reason}` : '';
@@ -5346,35 +5497,35 @@
         }
         function saveBan() {
             if (!fsbReady()) { showToast('Not connected — try again in a moment'); return; }
-            const ipEl = document.getElementById('banIpInput');
+            const acctEl = document.getElementById('banAccountInput');
             const actEl = document.getElementById('banActionInput');
             const reasonEl = document.getElementById('banReasonInput');
-            const ip = (ipEl ? ipEl.value : '').trim();
+            const account = (acctEl ? acctEl.value : '').trim();
             const action = (actEl && actEl.value) === 'warn' ? 'warn' : 'ban';
             const reason = (reasonEl ? reasonEl.value : '').trim();
-            if (!ip) { showToast('Enter an IP address'); return; }
-            // Doc ids can't contain '/', so swap any in IPv6-with-zone variants.
-            const safeId = ip.replace(/\//g, '_');
+            if (!account) { showToast('Enter an account name'); return; }
+            // Doc id is lowercased so all casing variants point at the same record.
+            const safeId = account.toLowerCase().replace(/[\/#?\.\[\]]/g, '_');
             const { db, doc, setDoc } = window.FSB;
-            setDoc(doc(db, 'bans', safeId), { ip, action, reason, createdAt: Date.now() })
+            setDoc(doc(db, 'bans', safeId), { account, action, reason, createdAt: Date.now() })
                 .then(() => {
-                    showToast(action === 'ban' ? 'IP banned' : 'IP warned');
-                    if (ipEl) ipEl.value = '';
+                    showToast(action === 'ban' ? 'Account banned' : 'Account warned');
+                    if (acctEl) acctEl.value = '';
                     if (reasonEl) reasonEl.value = '';
                 })
                 .catch(err => { console.error(err); showToast('Save failed'); });
         }
-        function quickBanIp(ip) {
-            if (!ip) return;
-            const ipEl = document.getElementById('banIpInput');
-            if (ipEl) ipEl.value = ip;
+        function quickBanAccount(account) {
+            if (!account) return;
+            const acctEl = document.getElementById('banAccountInput');
+            if (acctEl) acctEl.value = account;
             switchPanel('bans');
-            try { ipEl && ipEl.focus(); } catch(e) {}
+            try { acctEl && acctEl.focus(); } catch(e) {}
         }
-        function removeBan(ip) {
-            if (!fsbReady() || !ip) return;
-            if (!confirm('Remove ' + ip + ' from the list?')) return;
-            const safeId = String(ip).replace(/\//g, '_');
+        function removeBan(account) {
+            if (!fsbReady() || !account) return;
+            if (!confirm('Remove ' + account + ' from the list?')) return;
+            const safeId = String(account).toLowerCase().replace(/[\/#?\.\[\]]/g, '_');
             const { db, doc, deleteDoc } = window.FSB;
             deleteDoc(doc(db, 'bans', safeId))
                 .then(() => showToast('Removed'))
@@ -5384,7 +5535,7 @@
             const tbody = document.getElementById('adminBansList');
             if (!tbody) return;
             if (!__bans || __bans.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:1rem; color:var(--text-secondary);">No banned or warned IPs yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:1rem; color:var(--text-secondary);">No banned or warned accounts yet.</td></tr>';
                 return;
             }
             tbody.innerHTML = __bans.map(b => {
@@ -5395,11 +5546,11 @@
                 const created = b.createdAt ? new Date(Number(b.createdAt)).toLocaleString() : '—';
                 return `
                     <tr>
-                        <td><span class="ip-badge">${escapeHtml(String(b.ip || ''))}</span></td>
+                        <td><span class="account-badge">${escapeHtml(String(b.account || ''))}</span></td>
                         <td>${badge}</td>
                         <td>${escapeHtml(b.reason || '—')}</td>
                         <td>${escapeHtml(created)}</td>
-                        <td><button class="btn btn--danger btn--sm" onclick="removeBan(${JSON.stringify(b.ip)})">Remove</button></td>
+                        <td><button class="btn btn--danger btn--sm" onclick="removeBan(${JSON.stringify(b.account)})">Remove</button></td>
                     </tr>
                 `;
             }).join('');
@@ -5828,13 +5979,10 @@ ${cust.other ? `<div style="margin-top:.4rem;">Note: ${escapeHtml(cust.other)}</
             document.getElementById('accountOverlay').classList.add('active');
         }
 
-        // ===== Visitor IP + per-device fingerprint =====
-        // Used for the side "Order Status" panel — lets a customer track their
-        // orders without signing in. We resolve their public IP through ipify
-        // (no API key, no CORS issues) and also stash a stable device id in
-        // localStorage so they keep seeing their orders even if their IP changes.
-        let __visitorIp = '';
-        let __ipFetchPromise = null;
+        // ===== Per-device fingerprint =====
+        // Used for the side "My orders" panel — lets a customer track their
+        // orders without signing in. We stash a stable device id in localStorage
+        // so they keep seeing their orders across reloads on the same device.
         function getDeviceId() {
             try {
                 let id = localStorage.getItem('shopDeviceId');
@@ -5847,41 +5995,15 @@ ${cust.other ? `<div style="margin-top:.4rem;">Note: ${escapeHtml(cust.other)}</
                 return 'd_anon';
             }
         }
-        function getCachedIp() {
-            return __visitorIp || (function () {
-                try { return localStorage.getItem('shopLastVisitorIp') || ''; } catch (e) { return ''; }
-            })();
-        }
-        function fetchVisitorIp() {
-            if (__visitorIp) return Promise.resolve(__visitorIp);
-            if (__ipFetchPromise) return __ipFetchPromise;
-            __ipFetchPromise = fetch('https://api.ipify.org?format=json', { cache: 'no-store' })
-                .then(r => r.ok ? r.json() : Promise.reject(new Error('ipify ' + r.status)))
-                .then(j => {
-                    const ip = (j && j.ip) ? String(j.ip) : '';
-                    if (ip) {
-                        __visitorIp = ip;
-                        try { localStorage.setItem('shopLastVisitorIp', ip); } catch (e) {}
-                        // Now that we know our IP, see if the owner has warned us.
-                        try { maybeShowWarnToast(); } catch (e) {}
-                    }
-                    return ip;
-                })
-                .catch(err => {
-                    console.warn('Could not resolve visitor IP', err);
-                    return '';
-                });
-            return __ipFetchPromise;
-        }
 
-        // ===== Side "Order Status" panel (IP + device matched, no sign-in) =====
+        // ===== Side "My orders" panel (device + signed-in account matched) =====
         function visitorOrderMatches(o) {
             const c = o && o.customer;
             if (!c) return false;
-            const ip = getCachedIp();
             const dev = getDeviceId();
-            if (ip && c.ip && String(c.ip) === String(ip)) return true;
             if (dev && c.deviceId && String(c.deviceId) === String(dev)) return true;
+            const acct = (typeof getCurrentUser === 'function') ? getCurrentUser() : '';
+            if (acct && c.account && String(c.account).toLowerCase() === String(acct).toLowerCase()) return true;
             return false;
         }
         function getVisitorOrders() {
@@ -5907,8 +6029,6 @@ ${cust.other ? `<div style="margin-top:.4rem;">Note: ${escapeHtml(cust.other)}</
             if (!ov) return;
             ov.classList.add('active');
             renderOrderStatusPanel();
-            // Re-resolve IP in case it wasn't cached yet, then re-render once it resolves.
-            fetchVisitorIp().then(() => renderOrderStatusPanel()).catch(() => {});
         }
         function closeOrderStatusPanel() {
             const ov = document.getElementById('orderStatusOverlay');
@@ -6066,8 +6186,8 @@ ${cust.other ? `<div style="margin-top:.4rem;">Note: ${escapeHtml(cust.other)}</
             const p = document.getElementById('acctSignupPass').value;
             const p2 = document.getElementById('acctSignupPass2').value;
             const err = document.getElementById('acctError');
-            if (isVisitorBlocked()) { err.textContent = 'You are blocked from creating an account here'; return; }
             if (!u || !p) { err.textContent = 'Username and password required'; return; }
+            if (isAccountBanned(u)) { err.textContent = 'That username is blocked from this shop'; return; }
             if (u.length < 3) { err.textContent = 'Username must be at least 3 characters'; return; }
             if (p.length < 4) { err.textContent = 'Password must be at least 4 characters'; return; }
             if (p !== p2) { err.textContent = 'Passwords do not match'; return; }
@@ -6093,8 +6213,8 @@ ${cust.other ? `<div style="margin-top:.4rem;">Note: ${escapeHtml(cust.other)}</
             const u = document.getElementById('acctLoginUser').value.trim();
             const p = document.getElementById('acctLoginPass').value;
             const err = document.getElementById('acctError');
-            if (isVisitorBlocked()) { err.textContent = 'You are blocked from signing in here'; return; }
             if (!u || !p) { err.textContent = 'Enter username and password'; return; }
+            if (isAccountBanned(u)) { err.textContent = 'This account is blocked from signing in'; return; }
             const users = getUsers();
             const match = users.find(x => x.username.toLowerCase() === u.toLowerCase() && x.password === p);
             if (!match) { err.textContent = 'Invalid username or password'; return; }
