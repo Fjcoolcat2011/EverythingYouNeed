@@ -4375,11 +4375,11 @@
         const _SLT = ['sh0p', '_v1'].join('');
         // Pre-computed hash digests for sensitive credentials. Plaintexts are NOT
         // present anywhere in the source — only their salted hashes.
-        const _OUH = ['12di8ic', 'o083yo' ].join(':'); // owner username
+        const _OUH = ['pp3h0m',  '11zpm1w'].join(':'); // owner username
         const _OPH = ['1i5t1o',  'de2wpc' ].join(':'); // owner password
         const _OVH = ['1i5t1o',  'de2wpc' ].join(':'); // owner verify code (currently same string as password)
         const _UCH = ['kt5413',  '2j0du9' ].join(':'); // maintenance unlock code
-        const _ORH = ['wsj2r8',  '19m7e5s'].join(':'); // reserved username
+        const _ORH = ['1it75s6', 'mjb8ck' ].join(':'); // reserved username
         function _isOwnerCreds(u, p) { return _hk(u, _SLT) === _OUH && _hk(p, _SLT) === _OPH; }
         function _isVerifyCode(v)    { return _hk(v, _SLT) === _OVH; }
         function _isUnlockCode(s)    { return _hk(s, _SLT) === _UCH; }
@@ -4409,6 +4409,10 @@
                     localStorage.removeItem('shopOwnerKickSeenAt'); // legacy key, no longer used
                 } catch (e) {}
                 closeLogin();
+                // Re-mount the panel content (the defense IIFE empties it
+                // whenever the visitor isn't authenticated). Mount BEFORE
+                // adding 'active' so the user sees the populated panel.
+                __mountOwnerPanel();
                 document.getElementById('ownerPanel').classList.add('active');
                 loadData(); // Refresh data
                 lastOrderCount = orders.length;
@@ -4433,8 +4437,9 @@
                 localStorage.removeItem('shopOwnerLoggedIn'); // legacy key cleanup
                 localStorage.removeItem('shopOwnerKickSeenAt'); // legacy key cleanup
             } catch (e) {}
-            const panel = document.getElementById('ownerPanel');
-            if (panel) panel.classList.remove('active');
+            // Strip the panel from the DOM as well as removing the active
+            // class — that way DevTools class-flips can't recover the content.
+            __unmountOwnerPanel();
             applyMaintenanceUI(); // re-check overlay after owner signs out
         }
 
@@ -4449,11 +4454,13 @@
                 if (localStorage.getItem('shopOwnerToken') !== _OTH) {
                     localStorage.removeItem('shopOwnerToken');
                     localStorage.removeItem('shopOwnerLoggedIn');
+                    localStorage.removeItem('shopOwnerLoginAt');
                 }
             } catch (e) {}
             if (!isOwnerLoggedIn()) return;
             const panel = document.getElementById('ownerPanel');
             if (!panel) return;
+            __mountOwnerPanel();
             panel.classList.add('active');
             try { loadData(); } catch(e) {}
             lastOrderCount = orders.length;
@@ -4462,6 +4469,64 @@
             try { renderOwnerTickets(); } catch(e) {}
             try { updateOwnerTicketBadge(); } catch(e) {}
         }
+
+        // ===== Owner-panel DOM-tampering defense =====
+        // Anyone with DevTools (built-in, mobile, hosted, browser-menu Inspect)
+        // can manually add class="active" to <div id="ownerPanel"> and reveal
+        // the panel without logging in. To kill that bypass we:
+        //   1. Stash the panel's inner HTML on first paint and EMPTY the panel
+        //      whenever the visitor is not the owner. A class flip then just
+        //      reveals an empty <div>.
+        //   2. Watch the panel with a MutationObserver. Any time the class /
+        //      style / children are tampered with by a non-owner, we strip it.
+        //   3. Belt-and-suspenders interval poll catches any case the observer
+        //      could miss (rare, but free).
+        let __ownerPanelHTML = '';
+        function __mountOwnerPanel() {
+            const panel = document.getElementById('ownerPanel');
+            if (!panel) return;
+            if (__ownerPanelHTML && !panel.firstChild) {
+                panel.innerHTML = __ownerPanelHTML;
+            }
+        }
+        function __unmountOwnerPanel() {
+            const panel = document.getElementById('ownerPanel');
+            if (!panel) return;
+            panel.classList.remove('active');
+            panel.style.display = '';
+            panel.innerHTML = '';
+        }
+        (function installOwnerPanelDefense() {
+            function install() {
+                const panel = document.getElementById('ownerPanel');
+                if (!panel) return;
+                if (!__ownerPanelHTML) __ownerPanelHTML = panel.innerHTML;
+                const enforce = function () {
+                    if (isOwnerLoggedIn()) return; // legit owner: leave it alone
+                    if (panel.classList.contains('active')) panel.classList.remove('active');
+                    if (panel.style.display && panel.style.display !== 'none') {
+                        panel.style.display = '';
+                    }
+                    if (panel.firstChild) panel.innerHTML = '';
+                };
+                enforce(); // initial sweep
+                try {
+                    const obs = new MutationObserver(enforce);
+                    obs.observe(panel, {
+                        attributes: true,
+                        attributeFilter: ['class', 'style'],
+                        childList: true,
+                        subtree: false
+                    });
+                } catch (e) {}
+                setInterval(enforce, 250);
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', install);
+            } else {
+                install();
+            }
+        })();
 
         // ===== Footer "Kick All Owners" button =====
         // Anyone can click the button, but the actual kick is gated by a code
